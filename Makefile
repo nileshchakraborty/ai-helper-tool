@@ -23,3 +23,7 @@ lint:
 clean:
 	rm -rf backend/node_modules
 	rm -rf backend/dist
+
+run-mac:
+	@echo "Running Mac App (Bundled)..."
+	cd client-mac && ./run_bundled.sh

@@ -174,11 +174,27 @@ Go to **System Preferences > Privacy & Security** to grant these.
 
 ## Using the App
 
-### Global Hotkey
+### Stealth Features
+
+The app is designed to be **completely undetectable**:
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Invisible in Dock** | ✅ | App never shows in macOS Dock |
+| **Invisible to Screen Share** | ✅ | Hidden from Zoom, Teams, Meet, OBS |
+| **Invisible to Tray** | ✅ | No menu bar icon |
+| **Click-through Mode** | ✅ | Window becomes transparent to clicks |
+| **Undetectable by Browser** | ✅ | Pure native Swift, no Electron/JS footprint |
+| **Hidden from Screenshots** | ✅ | Won't appear in any screenshot API |
+
+### Hotkeys
 
 | Shortcut | Action |
 |----------|--------|
 | `Cmd + Shift + Space` | Show/Hide overlay window |
+| `Cmd + Shift + T` | Toggle click-through mode |
+| `Cmd + Shift + O` | Cycle opacity (100% → 80% → 60% → 40%) |
+| `Cmd + Q` | Quit application |
 
 ### Modes
 
@@ -198,10 +214,19 @@ Go to **System Preferences > Privacy & Security** to grant these.
 5. **Type your question** and click "Ask"
 6. **Stream response** appears in real-time
 
+### Click-through Mode
+
+When enabled (`Cmd + Shift + T`):
+- All mouse clicks pass through the overlay
+- Overlay becomes semi-transparent (50% opacity)
+- You can interact with apps behind the overlay
+- Press `Cmd + Shift + T` again to disable
+
 ### Closing the App
 
 - **Hide overlay**: Press `Cmd + Shift + Space`
 - **Quit app**: Press `Cmd + Q` or terminal `Ctrl + C`
+
 
 ---
 

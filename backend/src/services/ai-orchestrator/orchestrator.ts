@@ -1,5 +1,5 @@
 import { AIRouter } from './ai-router';
-import { BEHAVIORAL_SYSTEM_PROMPT, CODING_SYSTEM_PROMPT } from './prompts/templates';
+import { BEHAVIORAL_SYSTEM_PROMPT, CODING_SYSTEM_PROMPT, CASE_INTERVIEW_SYSTEM_PROMPT } from './prompts/templates';
 
 import { MCPClientService } from '../mcp/client';
 
@@ -79,6 +79,48 @@ export class AIOrchestrator {
         });
     }
 
+    async streamCaseAnalysis(caseDescription: string, context: string, providerId: string = 'ollama') {
+        await this.ensureMcpConnected();
+        const provider = this.router.getProvider(providerId);
+        const systemPrompt = CASE_INTERVIEW_SYSTEM_PROMPT.replace('{{context}}', context);
+
+        return provider.streamBehavioralAnswer(caseDescription, context, systemPrompt, {
+            tools: [],
+            toolExecutor: async () => ''
+        });
+    }
+
+    async streamConversationalCoaching(question: string, context: string, providerId: string = 'ollama') {
+        await this.ensureMcpConnected();
+        const provider = this.router.getProvider(providerId);
+
+        // Import the prompt (we'll need to add it to imports)
+        const { CONVERSATIONAL_COACHING_PROMPT } = await import('./prompts/templates');
+        const systemPrompt = CONVERSATIONAL_COACHING_PROMPT
+            .replace('{{question}}', question)
+            .replace('{{context}}', context);
+
+        return provider.streamBehavioralAnswer(question, context, systemPrompt, {
+            tools: [],
+            toolExecutor: async () => ''
+        });
+    }
+
+    async streamLiveAssist(transcription: string, interviewType: string, providerId: string = 'ollama') {
+        await this.ensureMcpConnected();
+        const provider = this.router.getProvider(providerId);
+
+        const { LIVE_ASSIST_PROMPT } = await import('./prompts/templates');
+        const systemPrompt = LIVE_ASSIST_PROMPT
+            .replace('{{transcription}}', transcription)
+            .replace('{{interviewType}}', interviewType);
+
+        return provider.streamBehavioralAnswer(transcription, interviewType, systemPrompt, {
+            tools: [],
+            toolExecutor: async () => ''
+        });
+    }
+
     async close() {
         if (this.mcpInitialized) {
             await this.mcpClient.close();
@@ -87,4 +129,3 @@ export class AIOrchestrator {
         }
     }
 }
-

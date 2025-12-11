@@ -127,6 +127,119 @@ Accept: text/event-stream
 }
 
 ### ===========================================
+### MBA Consulting Case Interviews
+### ===========================================
+
+### Case Interview - Profitability
+POST {{baseUrl}}/v1/case/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "caseDescription": "Our client is a national coffee chain that has seen profits decline by 20% over the past two years. What could be causing this and how should they address it?",
+  "context": "McKinsey first-round interview. Client has 500 stores, $2B revenue.",
+  "provider": "ollama"
+}
+
+### Case Interview - Market Entry
+POST {{baseUrl}}/v1/case/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "caseDescription": "A European luxury automaker is considering entering the Indian market. Should they do it, and if so, how?",
+  "context": "BCG final-round interview. Focus on market sizing and entry strategy.",
+  "provider": "ollama"
+}
+
+### Case Interview - Market Sizing
+POST {{baseUrl}}/v1/case/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "caseDescription": "How many golf balls can fit in a school bus?",
+  "context": "Estimation question. Walk through the calculation step by step.",
+  "provider": "ollama"
+}
+
+### Case Interview - M&A
+POST {{baseUrl}}/v1/case/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "caseDescription": "A private equity firm is considering acquiring a mid-sized pharmaceutical company. What factors should they evaluate?",
+  "context": "Bain case interview. Client is looking at a $500M acquisition.",
+  "provider": "ollama"
+}
+
+### ===========================================
+### Natural Coaching (Conversational Answers)
+### ===========================================
+
+### Natural Coaching - Behavioral Question
+# Generates talking points that sound natural when spoken, not like reading
+POST {{baseUrl}}/v1/coach/natural
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "Tell me about a time you had to deal with a difficult coworker",
+  "context": "Senior Software Engineer interview at Google. Want to show conflict resolution and teamwork.",
+  "provider": "ollama"
+}
+
+### Natural Coaching - Leadership Question
+POST {{baseUrl}}/v1/coach/natural
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "What's your management style?",
+  "context": "Engineering Manager position. 5 years of leadership experience.",
+  "provider": "ollama"
+}
+
+### ===========================================
+### Live Audio Assist (From Transcription)
+### ===========================================
+
+### Live Assist - Behavioral
+# Use this when you transcribe what the interviewer said
+POST {{baseUrl}}/v1/listen/assist
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "transcription": "Can you walk me through a situation where you had to make a difficult decision with incomplete information?",
+  "interviewType": "behavioral",
+  "provider": "ollama"
+}
+
+### Live Assist - Technical
+POST {{baseUrl}}/v1/listen/assist
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "transcription": "How would you design a URL shortener like bit.ly?",
+  "interviewType": "system design",
+  "provider": "ollama"
+}
+
+### Live Assist - Case Interview
+POST {{baseUrl}}/v1/listen/assist
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "transcription": "Our client is a regional bank losing market share to fintech startups. What should they do?",
+  "interviewType": "case",
+  "provider": "ollama"
+}
+
+### ===========================================
 ### Quick Tests (No Auth Required)
 ### ===========================================
 

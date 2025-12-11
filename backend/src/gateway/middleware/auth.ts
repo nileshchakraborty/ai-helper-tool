@@ -14,8 +14,19 @@ export const authMiddleware = fp(async (fastify, opts) => {
 
     fastify.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
         const url = request.url;
-        // Simple check for public routes
-        if (url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/health')) {
+        // Public routes that don't require authentication
+        const publicPaths = [
+            '/auth/login',
+            '/auth/signup',
+            '/health',
+            '/behavioral/answer',  // AI endpoints are public for easier testing
+            '/coding/assist',
+            '/case/analyze',       // MBA consulting case interviews
+            '/coach/natural',      // Natural conversational coaching
+            '/listen/assist',      // Live audio transcription assist
+        ];
+
+        if (publicPaths.some(path => url.includes(path))) {
             return;
         }
 
