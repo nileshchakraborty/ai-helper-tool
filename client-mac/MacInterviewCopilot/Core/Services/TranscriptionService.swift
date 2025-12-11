@@ -1,6 +1,7 @@
 import Foundation
 import Speech
 import Combine
+import SwiftWhisper
 
 /// Transcription provider options
 public enum TranscriptionProvider: String, CaseIterable, Codable {
@@ -242,12 +243,52 @@ public class TranscriptionService: ObservableObject {
     
     // MARK: - Whisper Local (whisper.cpp)
     
+    private var whisper: Whisper?
+    
+    /// Prepare Whisper model
+    public func prepareWhisper() async {
+        guard whisper == nil else { return }
+        
+        let modelName = "ggml-base.en" // File name without .bin extension if using url(forResource:withExtension:)
+        // But we put it in Resources manually via script, so we check Bundle.main.resourceURL
+        
+        // Try standard bundle resource
+        if let modelPath = Bundle.main.path(forResource: modelName, ofType: "bin") {
+            whisper = Whisper(fromFileURL: URL(fileURLWithPath: modelPath))
+            return
+        }
+        
+        // Try looking in Resources folder directly (if not indexed by bundle)
+        if let resourceURL = Bundle.main.resourceURL {
+            let directPath = resourceURL.appendingPathComponent("ggml-base.en.bin")
+            if FileManager.default.fileExists(atPath: directPath.path) {
+                whisper = Whisper(fromFileURL: directPath)
+                return
+            }
+        }
+        
+        error = "Whisper model not found. Please run the install script."
+    }
+
     /// Transcribe audio using local Whisper model
-    /// Note: Requires whisper.cpp to be built and model downloaded
-    public func transcribeWithWhisperLocal(audioPath: String) async throws -> String {
-        // This would call whisper.cpp via Process
-        // For now, return placeholder
-        throw TranscriptionError.notImplemented("Whisper.cpp integration requires model download")
+    public func transcribeWithWhisperLocal(audioFrames: [Float]) async throws -> String {
+        if whisper == nil { await prepareWhisper() }
+        
+        guard let whisper = whisper else {
+            throw TranscriptionError.notImplemented("Whisper model initialization failed")
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                do {
+                    let segments = try await whisper.transcribe(audioFrames: audioFrames)
+                    let text = segments.map(\.text).joined(separator: " ")
+                    continuation.resume(returning: text)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
     
     /// Clear current transcription

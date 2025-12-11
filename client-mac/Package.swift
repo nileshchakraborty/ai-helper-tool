@@ -16,13 +16,15 @@ let package = Package(
     ],
     dependencies: [
         // Local dependency for the generated API client
-        .package(path: "MacInterviewCopilot/Core/Networking/OpenAPIClient")
+        .package(path: "MacInterviewCopilot/Core/Networking/OpenAPIClient"),
+        .package(url: "https://github.com/exPHAT/SwiftWhisper.git", branch: "master")
     ],
     targets: [
         .executableTarget(
             name: "MacInterviewCopilotApp",
             dependencies: [
-                .product(name: "OpenAPIClient", package: "OpenAPIClient")
+                .product(name: "OpenAPIClient", package: "OpenAPIClient"),
+                .product(name: "SwiftWhisper", package: "SwiftWhisper")
             ],
             path: "MacInterviewCopilot",
             exclude: [

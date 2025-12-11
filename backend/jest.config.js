@@ -5,5 +5,4 @@ module.exports = {
     moduleNameMapper: {
         '^src/(.*)$': '<rootDir>/src/$1',
     },
-    modulePathIgnorePatterns: ['<rootDir>/tests/e2e.test.ts'],
 };

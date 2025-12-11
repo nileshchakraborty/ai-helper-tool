@@ -210,4 +210,11 @@ export async function aiRoutes(fastify: FastifyInstance) {
             reply.raw.end();
         }
     });
+    // Cleanup hook
+    fastify.addHook('onClose', async () => {
+        await Promise.all([
+            mcpClient.close(),
+            orchestrator.close()
+        ]);
+    });
 }

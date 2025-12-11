@@ -238,12 +238,16 @@ paths:
                       type: string
                     createdAt:
                       type: string
-  /behavioral/answer:
+  # --- Streaming Endpoints (SSE) ---
+
+  # Note: AI Routes are prefixed with /ai in implementation
+
+  /ai/behavioral/answer:
     post:
       summary: Get behavioral coaching (Streamed)
       tags: [Behavioral]
       security: [{ bearerAuth: [] }]
-      description: Returns text/event-stream with chunks of feedback and improved answer.
+      description: Returns text/event-stream with chunks.
       requestBody:
         required: true
         content:
@@ -254,16 +258,13 @@ paths:
           description: SSE Stream
           content:
             text/event-stream:
-              schema:
-                type: string
-                example: "data: {\"chunk\": \"Your answer uses...\"}\n\n"
+              schema: { type: string }
 
-  /coding/assist:
+  /ai/coding/assist:
     post:
       summary: Get coding assistance (Streamed)
       tags: [Coding]
       security: [{ bearerAuth: [] }]
-      description: Returns text/event-stream with reasoning and code.
       requestBody:
         required: true
         content:
@@ -274,8 +275,53 @@ paths:
           description: SSE Stream
           content:
             text/event-stream:
-              schema:
-                type: string
+              schema: { type: string }
+
+  /ai/coach/natural:
+    post:
+      summary: Conversational coaching (Streamed)
+      tags: [Behavioral]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text, session_id]
+              properties:
+                text: { type: string }
+                session_id: { type: string }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  /ai/listen/assist:
+    post:
+      summary: Live interview assistance (Streamed)
+      tags: [Live]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text, session_id]
+              properties:
+                text: { type: string }
+                session_id: { type: string }
+                context_image:
+                  { type: string, description: "Base64 encoded image" }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema: { type: string }
 
   /health:
     get:

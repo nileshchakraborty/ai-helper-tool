@@ -167,6 +167,36 @@ struct AuthContentView: View {
                         )
                         .padding(16)
                         .transition(.move(edge: .top).combined(with: .opacity))
+                        
+                        // AI Response Display
+                        if isAIThinking {
+                            HStack {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text("Thinking...")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.bottom, 8)
+                        } else if !aiResponseText.isEmpty {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("AI Assistant", systemImage: "sparkles")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.cyan)
+                                
+                                Text(aiResponseText)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .textSelection(.enabled)
+                            }
+                            .padding(12)
+                            .background(Color.cyan.opacity(0.1))
+                            .cornerRadius(10)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.cyan.opacity(0.3), lineWidth: 1))
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 12)
+                        }
                     }
                     
                     // Chat Interface
@@ -180,8 +210,25 @@ struct AuthContentView: View {
         }
     }
     
+    // AI Response State
+    @State private var aiResponseText: String = ""
+    @State private var isAIThinking: Bool = false
+    
     private func sendForAssist(transcription: String) async {
-        print("Sending for AI assist: \(transcription)")
+        guard !transcription.isEmpty else { return }
+        
+        isAIThinking = true
+        aiResponseText = ""
+        
+        do {
+            for try await chunk in StreamingClient.shared.streamLiveAssist(transcription: transcription) {
+                aiResponseText += chunk
+            }
+        } catch {
+            aiResponseText = "Error: \(error.localizedDescription)"
+        }
+        
+        isAIThinking = false
     }
 }
 

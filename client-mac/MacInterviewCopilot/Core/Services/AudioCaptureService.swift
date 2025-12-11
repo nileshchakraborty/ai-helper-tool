@@ -158,25 +158,40 @@ public class AudioCaptureService: NSObject, ObservableObject {
         let samples = audioBuffer
         audioBuffer.removeAll()
         
-        // Use macOS Speech Recognition
+        // Use macOS Speech Recognition or Whisper
         Task {
-            await transcribeWithSpeechRecognition(sampleCount: samples.count)
+            await transcribeAudio(samples: samples)
         }
     }
     
-    private func transcribeWithSpeechRecognition(sampleCount: Int) async {
-        // For demo purposes, we indicate audio was captured
-        // In production, integrate with:
-        // 1. Apple's SFSpeechRecognizer
-        // 2. Whisper.cpp local model
-        // 3. OpenAI Whisper API
+    private func transcribeAudio(samples: [Float]) async {
+        let settings = TranscriptionSettings.shared
         
-        DispatchQueue.main.async {
-            self.isProcessing = false
-            // Append a placeholder - in production this would be real transcription
-            if self.transcription.isEmpty {
-                self.transcription = "[Listening... speak clearly]"
+        switch settings.provider {
+        case .whisperLocal:
+            do {
+                let text = try await TranscriptionService.shared.transcribeWithWhisperLocal(audioFrames: samples)
+                DispatchQueue.main.async {
+                    if !text.isEmpty {
+                        self.transcription = text
+                    }
+                    self.isProcessing = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.error = error.localizedDescription
+                    self.isProcessing = false
+                }
             }
+            
+        case .appleSpeech:
+            // Apple Speech is continuous and handled by TranscriptionService directly via startTranscription()
+            // We don't need to push samples here unless we change architecture
+            // Currently startAppleSpeechRecognition() installs its own tap
+            DispatchQueue.main.async { self.isProcessing = false }
+            
+        default:
+            DispatchQueue.main.async { self.isProcessing = false }
         }
     }
     

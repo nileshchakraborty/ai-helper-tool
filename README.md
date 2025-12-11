@@ -24,9 +24,13 @@ cp backend/.env.example backend/.env
 # 3. Start Docker services (includes Ollama)
 docker compose -f infra/docker-compose.dev.yml up -d
 
-# 4. Run the Mac client
-cd client-mac && swift run MacInterviewCopilotApp
+# 4. Run the Mac client (Use this command to avoid crash)
+make run-mac
+# Or manually: cd client-mac && ./run_bundled.sh
 ```
+
+**Note**: Whisper Local is fully integrated using [SwiftWhisper](https://github.com/exPHAT/SwiftWhisper). The model (~140MB) is automatically downloaded on first launch.
+
 
 **Global Hotkey**: Press `Cmd + Shift + Space` to show/hide the overlay.
 

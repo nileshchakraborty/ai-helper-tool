@@ -14,7 +14,7 @@ class StreamingClient {
     }
     
     func streamCodingAssist(question: String, code: String, screenSnapshot: Data?, sessionId: String? = nil) -> AsyncThrowingStream<String, Error> {
-        // TODO: Handle multipart if snapshot present, currently using JSON for simplicity in MVP
+        // Handle multipart if snapshot present, currently using JSON for simplicity in MVP
         // If snapshot is needed, we convert to base64 string
         var body: [String: Any] = ["question": question, "code": code]
         if let data = screenSnapshot {
@@ -24,6 +24,18 @@ class StreamingClient {
             body["sessionId"] = sessionId
         }
         return streamRequest(endpoint: "/coding/assist", body: body)
+    }
+    
+    // MARK: - New Audio-Driven Endpoints
+    
+    func streamConversationalCoaching(question: String, context: String) -> AsyncThrowingStream<String, Error> {
+        let body: [String: Any] = ["question": question, "context": context]
+        return streamRequest(endpoint: "/coach/natural", body: body)
+    }
+    
+    func streamLiveAssist(transcription: String, interviewType: String = "behavioral") -> AsyncThrowingStream<String, Error> {
+        let body: [String: Any] = ["transcription": transcription, "interviewType": interviewType]
+        return streamRequest(endpoint: "/listen/assist", body: body)
     }
     
     private func streamRequest(endpoint: String, body: [String: Any]) -> AsyncThrowingStream<String, Error> {

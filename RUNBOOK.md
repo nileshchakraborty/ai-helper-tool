@@ -363,6 +363,33 @@ docker compose -f infra/docker-compose.dev.yml up -d
 
 ---
 
+
+## Testing
+
+### Backend Tests
+
+To avoid port conflicts with running Docker containers, run tests with a different port:
+
+```bash
+cd backend
+PORT=3001 npm test
+```
+
+### Client Tests
+
+Ensure the backend is running in Docker (port 3000) before running end-to-end tests:
+
+```bash
+cd client-mac
+swift test
+```
+
+### Coverage
+- **Backend**: Unit tests for Orchestrator, MCP, and E2E API flows.
+- **Client**: Unit tests for `AppleAIService`, `StreamingClient`, and E2E connectivity.
+
+---
+
 ## Scripts Reference
 
 | Script | Purpose |
@@ -370,6 +397,7 @@ docker compose -f infra/docker-compose.dev.yml up -d
 | `scripts/generate_jwt_secret.sh` | Generate secure JWT secret |
 | `scripts/generate-client.sh` | Regenerate OpenAPI Swift client |
 | `scripts/validate_ollama.sh` | Validate Ollama connection |
+| `client-mac/run_bundled.sh` | Build, sign, and launch Mac app (auto-downloads Whisper model) |
 
 ---
 
