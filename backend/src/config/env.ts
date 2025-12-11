@@ -12,6 +12,8 @@ const envSchema = z.object({
     OPENAI_API_KEY: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
     OLLAMA_HOST: z.string().default('http://127.0.0.1:11434'),
+    OLLAMA_MODEL: z.string().default('llama3.2'),
+    OLLAMA_API_KEY: z.string().optional(),
     JWT_SECRET: z.string().default('supersecret_dev_key_change_in_prod'),
 });
 

@@ -3,17 +3,12 @@ export interface AIStreamChunk {
     toolCall?: any;
 }
 
-export interface AIProvider {
-    streamBehavioralAnswer(
-        question: string,
-        context: string,
-        systemPrompt: string
-    ): Promise<AsyncIterable<string>>;
+export interface AIStreamOptions {
+    tools?: any[];
+    toolExecutor?: (name: string, args: any) => Promise<any>;
+}
 
-    streamCodingAssist(
-        question: string,
-        code: string,
-        screenSnapshot: string | undefined,
-        systemPrompt: string
-    ): Promise<AsyncIterable<string>>;
+export interface AIProvider {
+    streamBehavioralAnswer(question: string, context: string, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>>;
+    streamCodingAssist(question: string, code: string, screenSnapshot: string | undefined, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>>;
 }

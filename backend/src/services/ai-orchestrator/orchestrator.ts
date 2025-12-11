@@ -6,11 +6,22 @@ import { MCPClientService } from '../mcp/client';
 export class AIOrchestrator {
     private router: AIRouter;
     private mcpClient: MCPClientService;
+    private mcpInitialized = false;
+    private mcpInitPromise: Promise<void> | null = null;
 
     constructor() {
         this.router = new AIRouter();
         this.mcpClient = new MCPClientService();
-        this.initMcp();
+    }
+
+    private async ensureMcpConnected() {
+        if (this.mcpInitialized) return;
+
+        // Use a single promise to prevent multiple init attempts
+        if (!this.mcpInitPromise) {
+            this.mcpInitPromise = this.initMcp();
+        }
+        await this.mcpInitPromise;
     }
 
     private async initMcp() {
@@ -18,26 +29,62 @@ export class AIOrchestrator {
             await this.mcpClient.connect();
             const tools = await this.mcpClient.listTools();
             console.log('[AIOrchestrator] MCP Tools available:', tools.tools.map((t: any) => t.name).join(', '));
+            this.mcpInitialized = true;
         } catch (err) {
             console.error('[AIOrchestrator] Failed to connect to MCP:', err);
         }
     }
 
     async streamBehavioralAnswer(question: string, context: string, providerId: string = 'openai') {
+        await this.ensureMcpConnected();
         const provider = this.router.getProvider(providerId);
         const systemPrompt = BEHAVIORAL_SYSTEM_PROMPT.replace('{{context}}', context);
 
-        return provider.streamBehavioralAnswer(question, context, systemPrompt);
+        let tools: any[] = [];
+        try {
+            const toolList = await this.mcpClient.listTools();
+            tools = toolList.tools;
+        } catch (e) {
+            console.warn('Failed to list tools', e);
+        }
+
+        return provider.streamBehavioralAnswer(question, context, systemPrompt, {
+            tools,
+            toolExecutor: async (name, args) => {
+                const res = await this.mcpClient.callTool(name, args);
+                return res.content;
+            }
+        });
     }
 
     async streamCodingAssist(question: string, code: string, screenSnapshot: string, providerId: string = 'openai') {
+        await this.ensureMcpConnected();
         const provider = this.router.getProvider(providerId);
-        // In a real app, screenSnapshot would be processed by Vision/OCR first
-        const systemPrompt = CODING_SYSTEM_PROMPT.replace('{{screenContext}}', 'Image attached.');
+        const systemPrompt = CODING_SYSTEM_PROMPT.replace('{{screenContext}}', screenSnapshot ? 'Image attached.' : 'No screen context.');
 
-        // Pass screenSnapshot as an image if it looks like base64 or url
-        // const images = screenSnapshot && screenSnapshot.length > 50 ? [screenSnapshot] : undefined;
+        let tools: any[] = [];
+        try {
+            const toolList = await this.mcpClient.listTools();
+            tools = toolList.tools;
+        } catch (e) {
+            console.warn('Failed to list tools', e);
+        }
 
-        return provider.streamCodingAssist(question, code, screenSnapshot, systemPrompt);
+        return provider.streamCodingAssist(question, code, screenSnapshot, systemPrompt, {
+            tools,
+            toolExecutor: async (name, args) => {
+                const res = await this.mcpClient.callTool(name, args);
+                return res.content;
+            }
+        });
+    }
+
+    async close() {
+        if (this.mcpInitialized) {
+            await this.mcpClient.close();
+            this.mcpInitialized = false;
+            this.mcpInitPromise = null;
+        }
     }
 }
+

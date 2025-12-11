@@ -10,8 +10,8 @@ let package = Package(
     ],
     products: [
         .executable(
-            name: "MacInterviewCopilot",
-            targets: ["MacInterviewCopilot"]
+            name: "MacInterviewCopilotApp",
+            targets: ["MacInterviewCopilotApp"]
         )
     ],
     dependencies: [
@@ -20,14 +20,12 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "MacInterviewCopilot",
+            name: "MacInterviewCopilotApp",
             dependencies: [
                 .product(name: "OpenAPIClient", package: "OpenAPIClient")
             ],
             path: "MacInterviewCopilot",
             exclude: [
-                "Info.plist",
-                "MacInterviewCopilot.entitlements",
                 "Core/Networking/OpenAPIClient"
             ],
             resources: [
@@ -36,7 +34,7 @@ let package = Package(
         ),
         .testTarget(
             name: "MacInterviewCopilotTests",
-            dependencies: ["MacInterviewCopilot"],
+            dependencies: ["MacInterviewCopilotApp"],
             path: "Tests"
         )
     ]

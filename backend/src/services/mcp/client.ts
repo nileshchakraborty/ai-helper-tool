@@ -1,6 +1,8 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import path from "path";
+import { UserProfile, UserPreferences } from "../profile/profile-repository";
+import { Session, Message } from "../session/session-repository";
 
 export class MCPClientService {
     private client: Client;
@@ -23,13 +25,7 @@ export class MCPClientService {
 
         // Path to the server script. 
         // We assume the project is built and we use the dist version for stability.
-        // Adjust relative path based on where this file is: src/services/mcp/client.ts
-        // In dist: dist/services/mcp/client.js -> ../../mcp-server/index.js
-        // In src (during dev, but pointing to dist): ../../../dist/mcp-server/index.js
-
-        // This path resolution is tricky depending on execution context.
-        // Safer to rely on process.cwd() if we know we run from root.
-        const serverPath = path.resolve(process.cwd(), 'dist/mcp-server/index.js');
+        const serverPath = path.resolve(process.cwd(), 'dist/src/mcp-server/index.js');
 
         this.transport = new StdioClientTransport({
             command: "node",
@@ -58,4 +54,56 @@ export class MCPClientService {
             this.isConnected = false;
         }
     }
+
+    // ====== Typed Wrapper Methods ======
+
+    // Profile Tools
+    async getProfile(userId: string): Promise<UserProfile | null> {
+        const result = await this.callTool("get_profile", { userId });
+        const textContent = (result.content as any)[0]?.text;
+        return textContent ? JSON.parse(textContent) : null;
+    }
+
+    async updatePreferences(userId: string, preferences: UserPreferences): Promise<UserProfile> {
+        const result = await this.callTool("update_preferences", { userId, preferences });
+        const textContent = (result.content as any)[0]?.text;
+        return JSON.parse(textContent);
+    }
+
+    // Session Tools
+    async startSession(userId: string, type: 'behavioral' | 'coding', title: string): Promise<Session> {
+        const result = await this.callTool("start_session", { userId, type, title });
+        const textContent = (result.content as any)[0]?.text;
+        return JSON.parse(textContent);
+    }
+
+    async addMessage(userId: string, sessionId: string, role: 'user' | 'assistant' | 'system', content: string): Promise<Message> {
+        const result = await this.callTool("add_message", { userId, sessionId, role, content });
+        const textContent = (result.content as any)[0]?.text;
+        return JSON.parse(textContent);
+    }
+
+    async getHistory(userId: string): Promise<Session[]> {
+        const result = await this.callTool("get_history", { userId });
+        const textContent = (result.content as any)[0]?.text;
+        return JSON.parse(textContent);
+    }
+
+    async getSessionMessages(sessionId: string): Promise<Message[]> {
+        const result = await this.callTool("get_session_messages", { sessionId });
+        const textContent = (result.content as any)[0]?.text;
+        return JSON.parse(textContent);
+    }
+
+    // AI Tools (non-streaming - returns full response)
+    async behavioralAnswer(question: string, context: string, provider: string = 'openai'): Promise<string> {
+        const result = await this.callTool("behavioral_answer", { question, context, provider });
+        return (result.content as any)[0]?.text || "";
+    }
+
+    async codingAssist(question: string, code: string, screenSnapshot?: string, provider: string = 'openai'): Promise<string> {
+        const result = await this.callTool("coding_assist", { question, code, screenSnapshot, provider });
+        return (result.content as any)[0]?.text || "";
+    }
 }
+

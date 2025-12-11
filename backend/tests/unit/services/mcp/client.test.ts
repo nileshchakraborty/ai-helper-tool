@@ -1,4 +1,4 @@
-import { MCPClientService } from './client';
+import { MCPClientService } from 'src/services/mcp/client';
 
 describe('MCPClientService', () => {
     let mcpClient: MCPClientService;

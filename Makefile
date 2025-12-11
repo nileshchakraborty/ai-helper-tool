@@ -8,7 +8,7 @@ bootstrap:
 
 dev:
 	@echo "Starting Dev Environment..."
-	docker-compose -f infra/docker-compose.dev.yml up -d
+	docker-compose --env-file .env -f infra/docker-compose.dev.yml up -d
 	cd backend && npm run dev
 
 test:

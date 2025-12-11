@@ -1,17 +1,32 @@
 import { Ollama } from 'ollama';
-import { AIProvider } from './ai-provider.interface';
+import { AIProvider, AIStreamOptions } from './ai-provider.interface';
 import { env } from '../../../config/env';
 
 export class OllamaProvider implements AIProvider {
     private client: Ollama;
 
     constructor() {
-        this.client = new Ollama({ host: env.OLLAMA_HOST });
+        const config: any = { host: env.OLLAMA_HOST };
+
+        // Add API key authentication if provided (for remote Ollama servers)
+        if (env.OLLAMA_API_KEY) {
+            config.fetch = (url: string, options: RequestInit = {}) => {
+                return fetch(url, {
+                    ...options,
+                    headers: {
+                        ...options.headers,
+                        'Authorization': `Bearer ${env.OLLAMA_API_KEY}`,
+                    },
+                });
+            };
+        }
+
+        this.client = new Ollama(config);
     }
 
-    async streamBehavioralAnswer(question: string, context: string, systemPrompt: string): Promise<AsyncIterable<string>> {
+    async streamBehavioralAnswer(question: string, context: string, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>> {
         const response = await this.client.chat({
-            model: 'llama3:latest',
+            model: env.OLLAMA_MODEL,
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: `Context:\n${context}\n\nQuestion: ${question}` }
@@ -27,12 +42,22 @@ export class OllamaProvider implements AIProvider {
         return generator();
     }
 
-    async streamCodingAssist(question: string, code: string, screenSnapshot: string | undefined, systemPrompt: string): Promise<AsyncIterable<string>> {
+    async streamCodingAssist(question: string, code: string, screenSnapshot: string | undefined, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>> {
+        // Ollama supports images in 'images' field (base64)
+        const userMessage: any = {
+            role: 'user',
+            content: `Problem: ${question}\n\nCurrent Code:\n${code}`
+        };
+
+        if (screenSnapshot) {
+            userMessage.images = [screenSnapshot];
+        }
+
         const response = await this.client.chat({
-            model: 'llama3:latest',
+            model: env.OLLAMA_MODEL, // Can use vision model like llava by setting OLLAMA_MODEL=llava
             messages: [
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: `Problem: ${question}\n\nCurrent Code:\n${code}` }
+                userMessage
             ],
             stream: true,
         });

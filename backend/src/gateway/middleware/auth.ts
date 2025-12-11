@@ -13,8 +13,9 @@ export interface AuthUser {
 export const authMiddleware = fp(async (fastify, opts) => {
 
     fastify.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
-        const publicRoutes = ['/v1/health', '/v1/auth/login', '/v1/auth/signup'];
-        if (publicRoutes.includes(request.routeOptions.url || '')) {
+        const url = request.url;
+        // Simple check for public routes
+        if (url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/health')) {
             return;
         }
 

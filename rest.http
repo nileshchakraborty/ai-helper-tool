@@ -1,0 +1,148 @@
+### Mac Interview Copilot API Test Requests
+### Use with VS Code REST Client extension or JetBrains HTTP Client
+
+@baseUrl = http://localhost:3000
+@token = {{$dotenv JWT_SECRET}}
+
+### ===========================================
+### Health Check
+### ===========================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### ===========================================
+### Auth Endpoints
+### ===========================================
+
+### Sign Up
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "fullName": "Test User"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### ===========================================
+### Profile Endpoints (requires auth)
+### ===========================================
+
+### Get Profile
+GET {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+
+### Update Preferences
+PATCH {{baseUrl}}/profile/preferences
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "saveSessionHistory": true,
+  "dataRetentionDays": 30
+}
+
+### ===========================================
+### Session Endpoints (requires auth)
+### ===========================================
+
+### Create New Session
+POST {{baseUrl}}/sessions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Interview Practice",
+  "type": "behavioral"
+}
+
+### Get Session History
+GET {{baseUrl}}/sessions
+Authorization: Bearer {{token}}
+
+### Get Session Messages
+# @name getMessages
+GET {{baseUrl}}/sessions/SESSION_ID_HERE/messages
+Authorization: Bearer {{token}}
+
+### ===========================================
+### AI Streaming Endpoints
+### ===========================================
+
+### Behavioral Answer (SSE Stream)
+# Uses Ollama by default, add "provider": "openai" or "anthropic" if configured
+POST {{baseUrl}}/behavioral/answer
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "Tell me about a time you had to deal with a difficult coworker",
+  "context": "Applying for Senior Software Engineer role at a tech company. I want to demonstrate conflict resolution and teamwork skills.",
+  "provider": "ollama"
+}
+
+### Behavioral Answer with Session
+POST {{baseUrl}}/behavioral/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "Describe a challenging project you led",
+  "context": "Looking for Project Manager position. Emphasize leadership and problem-solving.",
+  "provider": "ollama",
+  "sessionId": "SESSION_ID_HERE"
+}
+
+### Coding Assist (SSE Stream)
+POST {{baseUrl}}/coding/assist
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "How do I optimize this function for better time complexity?",
+  "code": "function findDuplicates(arr) {\n  const duplicates = [];\n  for (let i = 0; i < arr.length; i++) {\n    for (let j = i + 1; j < arr.length; j++) {\n      if (arr[i] === arr[j] && !duplicates.includes(arr[i])) {\n        duplicates.push(arr[i]);\n      }\n    }\n  }\n  return duplicates;\n}",
+  "provider": "ollama"
+}
+
+### Coding Assist with Python
+POST {{baseUrl}}/coding/assist
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "Explain how this sorting algorithm works and suggest improvements",
+  "code": "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n    return arr",
+  "provider": "ollama"
+}
+
+### ===========================================
+### Quick Tests (No Auth Required)
+### ===========================================
+
+### Test Ollama Connection
+GET http://localhost:11434/api/version
+
+### List Ollama Models
+GET http://localhost:11434/api/tags
+
+### Test Behavioral with Ollama (minimal)
+POST {{baseUrl}}/behavioral/answer
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "question": "What is your greatest strength?",
+  "context": "Standard interview question",
+  "provider": "ollama"
+}
