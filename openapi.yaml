@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Mac Interview Copilot API
+  version: 1.0.0
+  description: >
+    Backend API for Mac Interview Copilot (Node/Fastify). 
+    Supports SSE (Server-Sent Events) for streaming AI responses.
+
+servers:
+  - url: http://localhost:3000/v1
+    description: Local Dev Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # --- Auth ---
+    SignUpRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        fullName: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        user: { $ref: "#/components/schemas/UserProfile" }
+
+    # --- Profile ---
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        fullName: { type: string }
+        preferences:
+          type: object
+          properties:
+            saveSessionHistory: { type: boolean }
+            dataRetentionDays: { type: integer }
+
+    # --- Session ---
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [behavioral, coding]
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    # --- Payloads ---
+    BehavioralStreamRequest:
+      type: object
+      required:
+        - question
+        - context
+      properties:
+        question:
+          type: string
+        context:
+          type: string
+        provider:
+          type: string
+        sessionId:
+          type: string
+
+    CodingStreamRequest:
+      type: object
+      required:
+        - question
+        - code
+      properties:
+        question:
+          type: string
+        code:
+          type: string
+        screenSnapshot:
+          type: string
+        provider:
+          type: string
+        sessionId:
+          type: string
+        screenContext:
+          {
+            type: string,
+            format: binary,
+            description: "Optional screenshot bytes",
+          }
+
+paths:
+  # --- Auth ---
+  /auth/signup:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SignUpRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+
+  # --- Streaming Endpoints (SSE) ---
+  /profile:
+    get:
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+  /profile/preferences:
+    patch:
+      summary: Update user preferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfilePreferences"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+  /sessions:
+    post:
+      summary: Start a new session
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                type:
+                  type: string
+                  enum: [behavioral, coding]
+      responses:
+        "200":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+    get:
+      summary: Get session history
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+  /sessions/{id}/messages:
+    get:
+      summary: Get session messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    role:
+                      type: string
+                    content:
+                      type: string
+                    createdAt:
+                      type: string
+  /behavioral/answer:
+    post:
+      summary: Get behavioral coaching (Streamed)
+      tags: [Behavioral]
+      security: [{ bearerAuth: [] }]
+      description: Returns text/event-stream with chunks of feedback and improved answer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BehavioralStreamRequest" }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: "data: {\"chunk\": \"Your answer uses...\"}\n\n"
+
+  /coding/assist:
+    post:
+      summary: Get coding assistance (Streamed)
+      tags: [Coding]
+      security: [{ bearerAuth: [] }]
+      description: Returns text/event-stream with reasoning and code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CodingStreamRequest" }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: OK }
