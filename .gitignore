@@ -110,7 +110,8 @@ backend/coverage/
 # Mac Client Build Artifacts
 client-mac/build/
 client-mac/*.log
-client-mac/MacInterviewCopilot.app/
+client-mac/models/*
+client-mac/MacInterviewCopilot.*
 
 # Logs
 *.log
