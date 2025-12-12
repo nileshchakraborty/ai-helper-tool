@@ -9,6 +9,13 @@ A privacy-first macOS interview copilot that provides real-time behavioral and c
 - 🖥️ **Screen Capture** - OCR to extract context from your screen
 - 🔒 **Privacy-First** - Local AI with Ollama, optional cloud providers
 - ⚡ **Real-Time Streaming** - Server-Sent Events (SSE) for instant responses
+- 🗽 **Standalone Mode** - Connect directly to Ollama (offline) without Backend/Node.
+- 🛡️ **Automatic Fallback** - Seamlessly switches to Backend if Direct Ollama fails.
+- 🤖 **Agent Swarm Supervisor** - Intelligent routing between Coding, Knowledge, System Design, and Meeting agents.
+- 🕵️ **Stealth Mode** - Minimal UI optimized for Zoom/Teams integration.
+- 🎥 **Meeting Assistant** - Real-time slide & transcript analysis for Chime, Meet, and Teams.
+- 🌐 **Platform Native** - Intelligent split-screen parsing for LeetCode & HackerRank.
+- 🧠 **Lightweight RAG** - In-memory vector search for custom documentation context.
 - 🔑 **MCP Integration** - Model Context Protocol for extensible AI tools
 
 ## Quick Start

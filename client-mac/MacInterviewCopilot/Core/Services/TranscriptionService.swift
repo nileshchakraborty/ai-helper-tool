@@ -48,9 +48,9 @@ public class TranscriptionSettings: ObservableObject {
     }
     
     private init() {
-        // Default to manual to avoid permission issues on first launch
-        let savedProvider = UserDefaults.standard.string(forKey: "transcriptionProvider") ?? TranscriptionProvider.manual.rawValue
-        self.provider = TranscriptionProvider(rawValue: savedProvider) ?? .manual
+        // Default to whisperLocal for better "out of box" experience, assuming model is present
+        let savedProvider = UserDefaults.standard.string(forKey: "transcriptionProvider") ?? TranscriptionProvider.whisperLocal.rawValue
+        self.provider = TranscriptionProvider(rawValue: savedProvider) ?? .whisperLocal
         self.whisperAPIKey = UserDefaults.standard.string(forKey: "whisperAPIKey") ?? ""
         self.whisperModel = UserDefaults.standard.string(forKey: "whisperModel") ?? "whisper-1"
     }
@@ -70,7 +70,7 @@ public class TranscriptionService: ObservableObject {
     private var speechRecognizer: SFSpeechRecognizer?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
-    private var audioEngine: AVAudioEngine?
+    // private var audioEngine: AVAudioEngine? // Removed to avoid conflict with AudioCaptureService
     
     private let settings = TranscriptionSettings.shared
     
@@ -132,9 +132,9 @@ public class TranscriptionService: ObservableObject {
         recognitionRequest?.endAudio()
         recognitionRequest = nil
         
-        audioEngine?.stop()
-        audioEngine?.inputNode.removeTap(onBus: 0)
-        audioEngine = nil
+        // audioEngine?.stop()
+        // audioEngine?.inputNode.removeTap(onBus: 0)
+        // audioEngine = nil
         
         isTranscribing = false
     }
@@ -152,22 +152,16 @@ public class TranscriptionService: ObservableObject {
             return
         }
         
-        do {
-            audioEngine = AVAudioEngine()
-            guard let engine = audioEngine else { return }
+            // We do NOT create AVAudioEngine here anymore.
+            // We rely on AudioCaptureService feeding us buffers via processAudioBuffer()
             
             recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
             guard let request = recognitionRequest else { return }
             
             request.shouldReportPartialResults = true
-            request.requiresOnDeviceRecognition = false // Set to true for offline
+            request.requiresOnDeviceRecognition = false
             
-            let inputNode = engine.inputNode
-            let recordingFormat = inputNode.outputFormat(forBus: 0)
-            
-            inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-                self?.recognitionRequest?.append(buffer)
-            }
+            // Note: We don't install tap here. We wait for buffers.
             
             recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
                 DispatchQueue.main.async {
@@ -176,20 +170,26 @@ public class TranscriptionService: ObservableObject {
                     }
                     
                     if let error = error {
+                        // Ignore "cancelled" error
+                        let nsError = error as NSError
+                        if nsError.domain == "kAFAssistantErrorDomain" && nsError.code == 216 {
+                            return 
+                        }
+                        
                         self?.error = error.localizedDescription
                         self?.stopTranscription()
                     }
                 }
             }
             
-            engine.prepare()
-            try engine.start()
             isTranscribing = true
             error = nil
-            
-        } catch {
-            self.error = "Failed to start speech recognition: \(error.localizedDescription)"
-        }
+    }
+
+    /// Process audio buffer from AudioCaptureService
+    public func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
+        guard isTranscribing, let request = recognitionRequest else { return }
+        request.append(buffer)
     }
     
     // MARK: - Whisper API

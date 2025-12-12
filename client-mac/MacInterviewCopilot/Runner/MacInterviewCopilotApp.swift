@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import MacInterviewCopilotLib
 
 @main
 struct MacInterviewCopilotApp: App {
@@ -22,16 +23,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // STEALTH: Hide from Dock - app runs as background accessory
         NSApp.setActivationPolicy(.accessory)
         
-        // Initialize Hotkey Manager
-        _ = GlobalHotkeyManager.shared
+        // Initialize Hotkey Manager and Mute Handler
+        let hotkeys = GlobalHotkeyManager.shared
+        hotkeys.onMuteToggle = {
+            let audio = AudioCaptureService.shared
+            let trans = TranscriptionService.shared
+            
+            DispatchQueue.main.async {
+                if audio.isRecording || trans.isTranscribing {
+                    audio.stopRecording()
+                    trans.stopTranscription()
+                    NSSound.beep() // Feedback
+                } else {
+                    if TranscriptionSettings.shared.provider == .manual {
+                        TranscriptionSettings.shared.provider = .whisperLocal
+                    }
+                    audio.startRecording()
+                    if TranscriptionSettings.shared.provider == .appleSpeech {
+                        trans.checkPermissionsIfNeeded()
+                        trans.startTranscription()
+                    }
+                    NSSound.beep() // Feedback
+                }
+            }
+        }
         
         // Setup Overlay Window with larger size for better usability
         let contentView = OverlayView().environmentObject(AppState.shared)
-        overlayWindow = OverlayWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 600),
-            backing: .buffered,
-            defer: false
-        )
+        overlayWindow = OverlayWindow()
         overlayWindow.contentView = NSHostingView(rootView: contentView)
         
         // Position window in bottom-right corner (less conspicuous)
@@ -53,6 +72,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 } else {
                     self?.overlayWindow.orderOut(nil)
                 }
+            }
+            .store(in: &cancellables)
+        
+        // Bind Opacity
+        AppState.shared.$windowOpacity
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] opacity in
+                self?.overlayWindow.setOpacity(CGFloat(opacity))
             }
             .store(in: &cancellables)
         

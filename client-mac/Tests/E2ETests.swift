@@ -32,7 +32,7 @@ final class E2ETests: XCTestCase {
         // This test assumes OPENAI_API_KEY is properly set in backend
         // or that it gracefully fails if not set, but the endpoint should reach
         
-        let url = URL(string: "http://localhost:3000/v1/ai/behavioral/answer")!
+        let url = URL(string: "http://localhost:3000/v1/behavioral/answer")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")

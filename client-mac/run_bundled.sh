@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+cd "$(dirname "$0")"
 
 APP_NAME="MacInterviewCopilot.app"
 EXECUTABLE_NAME="MacInterviewCopilotApp"
@@ -16,14 +17,18 @@ cp .build/debug/"$EXECUTABLE_NAME" "$APP_NAME/Contents/MacOS/"
 cp MacInterviewCopilot/Info.plist "$APP_NAME/Contents/Info.plist"
 echo "Info.plist copied."
 
-# Download Whisper Model if needed
+# Download Whisper Model (Cached)
 MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin"
-MODEL_PATH="$APP_NAME/Contents/Resources/ggml-base.en.bin"
+CACHE_DIR="models"
+mkdir -p "$CACHE_DIR"
+CACHE_PATH="$CACHE_DIR/ggml-base.en.bin"
 
-if [ ! -f "$MODEL_PATH" ]; then
+if [ ! -f "$CACHE_PATH" ]; then
     echo "Downloading Whisper model (base.en)... This may take a moment."
-    curl -L "$MODEL_URL" -o "$MODEL_PATH"
+    curl -L "$MODEL_URL" -o "$CACHE_PATH"
 fi
+
+cp "$CACHE_PATH" "$APP_NAME/Contents/Resources/"
 
 # Create Entitlements for TCC
 cat > entitlements.plist <<EOF

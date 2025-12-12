@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct TranscriptionSettingsView: View {
     @ObservedObject var settings = TranscriptionSettings.shared
+    @ObservedObject var appState = AppState.shared
     @Environment(\.dismiss) var dismiss
     
     public init() {}
@@ -9,8 +10,9 @@ public struct TranscriptionSettingsView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
+            // Header
             HStack {
-                Text("Transcription Settings")
+                Text("Settings")
                     .font(.headline)
                     .foregroundColor(.white)
                  Spacer()
@@ -28,9 +30,9 @@ public struct TranscriptionSettingsView: View {
                 .background(Color.white.opacity(0.1))
             
             HStack(spacing: 0) {
-                // Sidebar (Providers)
+                // Sidebar
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("PROVIDER")
+                    Text("AUDIO SOURCE")
                         .font(.caption2)
                         .fontWeight(.bold)
                         .foregroundColor(.gray)
@@ -46,24 +48,50 @@ public struct TranscriptionSettingsView: View {
                                     .font(.system(size: 13))
                                 Spacer()
                                 if settings.provider == provider {
-                                    Image(systemName: "checkmark")
-                                        .font(.caption)
+                                    Circle()
+                                        .fill(Color.blue)
+                                        .frame(width: 6, height: 6)
                                 }
                             }
                             .padding(.vertical, 8)
                             .padding(.horizontal, 12)
-                            .background(settings.provider == provider ? Color.blue.opacity(0.2) : Color.clear)
-                            .foregroundColor(settings.provider == provider ? .blue : .white)
-                            .cornerRadius(6)
+                            .background(settings.provider == provider ? Color.white.opacity(0.1) : Color.clear)
+                            .foregroundColor(settings.provider == provider ? .white : .gray)
+                            .cornerRadius(8)
                         }
                         .buttonStyle(.plain)
                     }
                     
                     Spacer()
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+                        .padding(.vertical, 8)
+                    
+                    // Appearance Section
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("Appearance", systemImage: "macwindow")
+                             .font(.caption2)
+                             .fontWeight(.bold)
+                             .foregroundColor(.gray)
+                        
+                        HStack {
+                            Image(systemName: "sun.min")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Slider(value: $appState.windowOpacity, in: 0.2...1.0)
+                                .tint(.white)
+                            Image(systemName: "sun.max.fill")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
                 }
-                .padding()
-                .frame(width: 200)
-                .background(Color.black.opacity(0.2))
+                .padding(.vertical)
+                .frame(width: 220)
+                .background(Color.black.opacity(0.3))
                 
                 Divider()
                     .background(Color.white.opacity(0.1))
@@ -71,48 +99,12 @@ public struct TranscriptionSettingsView: View {
                 // Content Area
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Description Title
-                        HStack {
-                            Image(systemName: providerIcon(for: settings.provider))
-                                .font(.title3)
-                                .foregroundColor(.blue)
-                            Text(settings.provider.rawValue)
-                                .font(.title3)
-                                .fontWeight(.medium)
-                        }
-                        
-                        Text(settings.provider.description)
-                            .font(.system(size: 13))
-                            .foregroundColor(.gray)
-                            .fixedSize(horizontal: false, vertical: true)
-                        
-                        Divider()
-                            .background(Color.white.opacity(0.1))
-                        
-                        // Provider configuration
                         providerConfiguration(for: settings.provider)
-                        
                         Spacer()
                     }
-                    .padding(20)
+                    .padding(24)
                 }
             }
-            
-            // Footer
-            HStack {
-                Spacer()
-                Button("Done") {
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 8)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-            }
-            .padding(16)
-            .background(Color.black.opacity(0.4))
         }
         .frame(width: 600, height: 450)
         .background(Color(hex: "1E1E1E"))

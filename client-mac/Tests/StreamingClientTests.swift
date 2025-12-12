@@ -1,5 +1,5 @@
 import XCTest
-@testable import MacInterviewCopilotApp
+@testable import MacInterviewCopilotLib
 
 final class StreamingClientTests: XCTestCase {
     

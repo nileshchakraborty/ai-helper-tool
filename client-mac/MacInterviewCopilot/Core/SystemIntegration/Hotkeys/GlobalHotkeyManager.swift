@@ -1,46 +1,61 @@
 import Cocoa
 import Carbon
 
-class GlobalHotkeyManager: ObservableObject {
-    static let shared = GlobalHotkeyManager()
+public class GlobalHotkeyManager: ObservableObject {
+    public static let shared = GlobalHotkeyManager()
     
-    @Published var isOverlayVisible: Bool = false
+    @Published public var isOverlayVisible: Bool = false
+    public var onMuteToggle: (() -> Void)?
     
-    private var hotKeyRef: EventHotKeyRef?
+    private var toggleHotKeyRef: EventHotKeyRef?
+    private var muteHotKeyRef: EventHotKeyRef?
     
     private init() {
-        // Register Cmd+Shift+Space (example) or configurable
-        registerHotKey()
+        registerHotKeys()
         
         // Install event handler
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         
-        InstallEventHandler(GetApplicationEventTarget(), { (_: EventHandlerCallRef?, _: EventRef?, _: UnsafeMutableRawPointer?) -> OSStatus in
-            // Handle hotkey
-            DispatchQueue.main.async {
-                GlobalHotkeyManager.shared.toggleOverlay()
+        InstallEventHandler(GetApplicationEventTarget(), { (_: EventHandlerCallRef?, event: EventRef?, _: UnsafeMutableRawPointer?) -> OSStatus in
+            guard let event = event else { return noErr }
+            
+            var hotKeyID = EventHotKeyID()
+            let status = GetEventParameter(event,
+                                           EventParamName(kEventParamDirectObject),
+                                           EventParamType(typeEventHotKeyID),
+                                           nil,
+                                           MemoryLayout<EventHotKeyID>.size,
+                                           nil,
+                                           &hotKeyID)
+            
+            if status == noErr {
+                DispatchQueue.main.async {
+                    if hotKeyID.id == 1 {
+                        GlobalHotkeyManager.shared.toggleOverlay()
+                    } else if hotKeyID.id == 2 {
+                        GlobalHotkeyManager.shared.onMuteToggle?()
+                    }
+                }
             }
             return noErr
         }, 1, &eventType, nil, nil)
     }
     
-    private func registerHotKey() {
-        let modifiers = cmdKey | shiftKey
-        let keyCode = 49 // Space
-        // Note: Real app should allow user configuration
+    private func registerHotKeys() {
+        // Toggle Overlay: Cmd+Shift+Space (49)
+        let toggleID = EventHotKeyID(signature: OSType(0x1111), id: 1)
+        RegisterEventHotKey(UInt32(49), UInt32(cmdKey | shiftKey), toggleID, GetApplicationEventTarget(), 0, &toggleHotKeyRef)
         
-        var hotKeyID = EventHotKeyID()
-        hotKeyID.signature = OSType(0x1111) // arbitrary signature
-        hotKeyID.id = 1
-        
-        RegisterEventHotKey(UInt32(keyCode), UInt32(modifiers), hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        // Toggle Mute: Cmd+Shift+M (46)
+        let muteID = EventHotKeyID(signature: OSType(0x2222), id: 2)
+        RegisterEventHotKey(UInt32(46), UInt32(cmdKey | shiftKey), muteID, GetApplicationEventTarget(), 0, &muteHotKeyRef)
     }
     
     func toggleOverlay() {
         isOverlayVisible.toggle()
         if isOverlayVisible {
             NSApp.activate(ignoringOtherApps: true)
-            // OverlayWindow should appear
+            // OverlayWindow should appear via Publisher
         } else {
             NSApp.hide(nil)
         }

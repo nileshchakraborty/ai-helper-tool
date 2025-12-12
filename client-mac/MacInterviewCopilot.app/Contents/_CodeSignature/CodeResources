@@ -3,9 +3,22 @@
 <plist version="1.0">
 <dict>
 	<key>files</key>
-	<dict/>
+	<dict>
+		<key>Resources/ggml-base.en.bin</key>
+		<data>
+		E3xAQD14/VTUVNoPm9mY94cDOQw=
+		</data>
+	</dict>
 	<key>files2</key>
-	<dict/>
+	<dict>
+		<key>Resources/ggml-base.en.bin</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=
+			</data>
+		</dict>
+	</dict>
 	<key>rules</key>
 	<dict>
 		<key>^Resources/</key>

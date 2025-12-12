@@ -3,19 +3,20 @@ import SwiftUI
 import Combine
 import OpenAPIClient
 
-class AppState: ObservableObject {
-    @Published var isLoggedIn: Bool = false
-    @Published var currentSessionId: String? = nil
-    @Published var userProfile: UserProfile? = nil
+public class AppState: ObservableObject {
+    @Published public var isLoggedIn: Bool = false
+    @Published public var currentSessionId: String? = nil
+    @Published public var userProfile: UserProfile? = nil
+    @Published public var windowOpacity: Double = 1.0
     
-    static let shared = AppState()
+    public static let shared = AppState()
     
     private init() {
         checkLoginStatus()
     }
     
-    func checkLoginStatus() {
-        if let token = KeychainService.shared.getAccessToken() {
+    public func checkLoginStatus() {
+        if KeychainService.shared.getAccessToken() != nil {
             // Verify token validity or refresh? 
             // For MVP, just assume valid if present. 
             // Better: Perform a /profile check
@@ -26,13 +27,13 @@ class AppState: ObservableObject {
         }
     }
     
-    func login(accessToken: String, user: UserProfile) {
+    public func login(accessToken: String, user: UserProfile) {
         KeychainService.shared.saveAccessToken(accessToken)
         self.isLoggedIn = true
         self.userProfile = user
     }
     
-    func logout() {
+    public func logout() {
         KeychainService.shared.deleteAccessToken()
         self.isLoggedIn = false
         self.userProfile = nil

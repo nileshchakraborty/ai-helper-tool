@@ -20,14 +20,15 @@ let package = Package(
         .package(url: "https://github.com/exPHAT/SwiftWhisper.git", branch: "master")
     ],
     targets: [
-        .executableTarget(
-            name: "MacInterviewCopilotApp",
+        .target(
+            name: "MacInterviewCopilotLib",
             dependencies: [
                 .product(name: "OpenAPIClient", package: "OpenAPIClient"),
                 .product(name: "SwiftWhisper", package: "SwiftWhisper")
             ],
             path: "MacInterviewCopilot",
             exclude: [
+                "Runner",
                 "Core/Networking/OpenAPIClient",
                 "Info.plist"
             ],
@@ -35,9 +36,14 @@ let package = Package(
                 .process("Resources")
             ]
         ),
+        .executableTarget(
+            name: "MacInterviewCopilotApp", // Keep binary name
+            dependencies: ["MacInterviewCopilotLib"],
+            path: "MacInterviewCopilot/Runner"
+        ),
         .testTarget(
             name: "MacInterviewCopilotTests",
-            dependencies: ["MacInterviewCopilotApp"],
+            dependencies: ["MacInterviewCopilotLib"],
             path: "Tests"
         )
     ]

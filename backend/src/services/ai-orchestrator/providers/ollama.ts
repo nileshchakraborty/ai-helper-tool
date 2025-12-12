@@ -68,5 +68,46 @@ export class OllamaProvider implements AIProvider {
             }
         }
         return generator();
+        return generator();
+    }
+
+    async streamVisionAnswer(prompt: string, imageBase64: string, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>> {
+        const response = await this.client.chat({
+            model: 'llama3.2-vision', // Explicitly use vision model
+            messages: [
+                { role: 'system', content: systemPrompt },
+                {
+                    role: 'user',
+                    content: `Analyze this image: ${prompt}`,
+                    images: [imageBase64]
+                }
+            ],
+            stream: true,
+        });
+
+        async function* generator() {
+            for await (const part of response) {
+                yield part.message.content;
+            }
+        }
+        return generator();
+    }
+
+    async streamChat(message: string, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>> {
+        const response = await this.client.chat({
+            model: env.OLLAMA_MODEL,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: message }
+            ],
+            stream: true
+        });
+
+        async function* generator() {
+            for await (const part of response) {
+                yield part.message.content;
+            }
+        }
+        return generator();
     }
 }

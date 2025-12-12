@@ -1,25 +1,24 @@
 import Cocoa
 import SwiftUI
 
-class OverlayWindow: NSPanel {
+public class OverlayWindow: NSWindow {
     private var isClickThrough = false
     private var opacityLevel: CGFloat = 1.0
     private let opacityLevels: [CGFloat] = [1.0, 0.8, 0.6, 0.4]
     
-    init(contentRect: NSRect, backing: NSWindow.BackingStoreType, defer flag: Bool) {
-        super.init(contentRect: contentRect, styleMask: [.nonactivatingPanel, .titled, .resizable, .closable, .fullSizeContentView], backing: backing, defer: flag)
+    public init() {
+        super.init(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [.borderless, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
         
         // Window behavior
-        self.isFloatingPanel = true
+        self.isOpaque = false
+        self.backgroundColor = .clear
         self.level = .floating
-        self.styleMask = [.nonactivatingPanel, .titled, .resizable, .closable, .fullSizeContentView]
-        // Removed .stationary to allow easier movement between screens
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        self.titleVisibility = .hidden
-        self.titlebarAppearsTransparent = true
-        self.isMovableByWindowBackground = true
-        self.isMovable = true
-        
         // Visual styling
         self.backgroundColor = .clear // Clear for VisualEffectView
         self.hasShadow = true
@@ -39,7 +38,8 @@ class OverlayWindow: NSPanel {
     }
     
     // Toggle click-through mode (Cmd+Shift+T)
-    func toggleClickThrough() {
+    // Toggle click-through mode (Cmd+Shift+T)
+    public func toggleClickThrough() {
         isClickThrough.toggle()
         self.ignoresMouseEvents = isClickThrough
         
@@ -52,7 +52,7 @@ class OverlayWindow: NSPanel {
     }
     
     // Cycle through opacity levels (Cmd+Shift+O)
-    func cycleOpacity() {
+    public func cycleOpacity() {
         guard !isClickThrough else { return } // Don't cycle when click-through is active
         
         if let currentIndex = opacityLevels.firstIndex(of: opacityLevel) {
@@ -65,19 +65,18 @@ class OverlayWindow: NSPanel {
     }
     
     // Set specific opacity
-    func setOpacity(_ opacity: CGFloat) {
+    public func setOpacity(_ opacity: CGFloat) {
         opacityLevel = max(0.2, min(1.0, opacity))
         if !isClickThrough {
             self.alphaValue = opacityLevel
         }
     }
     
-    override var canBecomeKey: Bool {
-        // Can't become key when in click-through mode
-        return !isClickThrough
+    public override var canBecomeKey: Bool {
+        return true
     }
     
-    override var canBecomeMain: Bool {
-        return !isClickThrough
+    public override var canBecomeMain: Bool {
+        return true
     }
 }

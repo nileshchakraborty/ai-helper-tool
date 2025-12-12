@@ -1,2 +1,18 @@
+# Node
+node_modules/
+dist/
+coverage/
+
+# Env
 .env
+.env.test
+.env.production
 .env.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Persistence
+db.sqlite

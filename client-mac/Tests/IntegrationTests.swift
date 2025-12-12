@@ -1,5 +1,5 @@
 import XCTest
-@testable import MacInterviewCopilotApp
+@testable import MacInterviewCopilotLib
 
 class IntegrationTests: XCTestCase {
     func testBackendConnection() async throws {

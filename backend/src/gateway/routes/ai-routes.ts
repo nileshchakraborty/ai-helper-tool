@@ -210,6 +210,53 @@ export async function aiRoutes(fastify: FastifyInstance) {
             reply.raw.end();
         }
     });
+
+    // System Design interview - generates instant text-based Mermaid diagrams
+    fastify.post('/system-design/analyze', async (request, reply) => {
+        await ensureMcpConnected();
+
+        const user = request.user as { id: string } | undefined;
+        const userId = user?.id || 'anonymous';
+
+        const { problem, context = '', provider = 'ollama', sessionId } = request.body as any;
+
+        if (sessionId && user?.id) {
+            try {
+                await mcpClient.addMessage(userId, sessionId, 'user', `System Design: ${problem}\nContext: ${context}`);
+            } catch (e) {
+                // Ignore session errors
+            }
+        }
+
+        reply.raw.setHeader('Content-Type', 'text/event-stream');
+        reply.raw.setHeader('Cache-Control', 'no-cache');
+        reply.raw.setHeader('Connection', 'keep-alive');
+
+        let fullResponse = '';
+
+        try {
+            const stream = await orchestrator.streamSystemDesign(problem, context, provider);
+
+            for await (const chunk of stream) {
+                fullResponse += chunk;
+                reply.raw.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            }
+        } catch (error) {
+            console.error('[AI] System design error:', error);
+            reply.raw.write(`data: ${JSON.stringify({ error: String(error) })}\n\n`);
+        } finally {
+            if (sessionId && user?.id && fullResponse) {
+                try {
+                    await mcpClient.addMessage(userId, sessionId, 'assistant', fullResponse);
+                } catch (e) {
+                    // Ignore session save errors
+                }
+            }
+            reply.raw.write('data: [DONE]\n\n');
+            reply.raw.end();
+        }
+    });
+
     // Cleanup hook
     fastify.addHook('onClose', async () => {
         await Promise.all([
@@ -217,4 +264,35 @@ export async function aiRoutes(fastify: FastifyInstance) {
             orchestrator.close()
         ]);
     });
+
+    fastify.post('/agent/chat', async (request, reply) => {
+        await ensureMcpConnected();
+
+        const user = request.user as { id: string } | undefined;
+        // Default to ollama provider
+        const { message, context = '', provider = 'ollama', sessionId, signals } = request.body as any;
+
+        reply.raw.setHeader('Content-Type', 'text/event-stream');
+        reply.raw.setHeader('Cache-Control', 'no-cache');
+        reply.raw.setHeader('Connection', 'keep-alive');
+
+        let fullResponse = '';
+
+        try {
+            // Use Automated Routing with Multimodal Signals
+            const stream = await orchestrator.routeRequest(message, context, provider, signals);
+
+            for await (const chunk of stream) {
+                fullResponse += chunk;
+                reply.raw.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            }
+        } catch (error) {
+            console.error('[AI] Agent Routing error:', error);
+            reply.raw.write(`data: ${JSON.stringify({ error: String(error) })}\n\n`);
+        } finally {
+            reply.raw.write('data: [DONE]\n\n');
+            reply.raw.end();
+        }
+    });
+
 }

@@ -11,6 +11,7 @@ const envSchema = z.object({
     DATABASE_URL: z.string().default('postgresql://dev:dev@localhost:5432/maccopilot'),
     OPENAI_API_KEY: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
+    GOOGLE_API_KEY: z.string().optional(),
     OLLAMA_HOST: z.string().default('http://127.0.0.1:11434'),
     OLLAMA_MODEL: z.string().default('llama3.2'),
     OLLAMA_API_KEY: z.string().optional(),

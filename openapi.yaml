@@ -323,6 +323,93 @@ paths:
             text/event-stream:
               schema: { type: string }
 
+  /ai/image/diagram:
+    post:
+      summary: Generate architecture diagram (Nano Banana)
+      tags: [Image]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description: { type: string }
+                style:
+                  type: string
+                  enum:
+                    [isometric, flowchart, sequence, architecture, handdrawn]
+                colorScheme:
+                  type: string
+                  enum: [dark, light, colorful]
+      responses:
+        "200":
+          description: Generated diagram description
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  content: { type: string }
+                  mimeType: { type: string }
+
+  /ai/image/flashcard:
+    post:
+      summary: Generate interview prep flashcard (Nano Banana)
+      tags: [Image]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [framework, title, points]
+              properties:
+                framework: { type: string }
+                title: { type: string }
+                points:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          description: Generated flashcard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  content: { type: string }
+
+  /ai/image/visualization:
+    post:
+      summary: Generate code/algorithm visualization (Nano Banana)
+      tags: [Image]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [concept, type]
+              properties:
+                concept: { type: string }
+                type:
+                  type: string
+                  enum: [datastructure, algorithm, comparison]
+      responses:
+        "200":
+          description: Generated visualization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  content: { type: string }
+
   /health:
     get:
       summary: Health check

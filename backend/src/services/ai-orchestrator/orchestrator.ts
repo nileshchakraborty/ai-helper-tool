@@ -1,10 +1,13 @@
 import { AIRouter } from './ai-router';
-import { BEHAVIORAL_SYSTEM_PROMPT, CODING_SYSTEM_PROMPT, CASE_INTERVIEW_SYSTEM_PROMPT } from './prompts/templates';
+import { BEHAVIORAL_SYSTEM_PROMPT, CODING_SYSTEM_PROMPT, CASE_INTERVIEW_SYSTEM_PROMPT, MEETING_SYSTEM_PROMPT } from './prompts/templates';
 
 import { MCPClientService } from '../mcp/client';
+import { VectorService } from '../VectorService';
+import { SupervisorAgent, AgentType } from './agents/SupervisorAgent';
 
 export class AIOrchestrator {
     private router: AIRouter;
+    private supervisor: SupervisorAgent;
     private mcpClient: MCPClientService;
     private mcpInitialized = false;
     private mcpInitPromise: Promise<void> | null = null;
@@ -12,6 +15,7 @@ export class AIOrchestrator {
     constructor() {
         this.router = new AIRouter();
         this.mcpClient = new MCPClientService();
+        this.supervisor = new SupervisorAgent();
     }
 
     private async ensureMcpConnected() {
@@ -38,7 +42,17 @@ export class AIOrchestrator {
     async streamBehavioralAnswer(question: string, context: string, providerId: string = 'openai') {
         await this.ensureMcpConnected();
         const provider = this.router.getProvider(providerId);
-        const systemPrompt = BEHAVIORAL_SYSTEM_PROMPT.replace('{{context}}', context);
+
+        // RAG Retrieval
+        const vectorService = VectorService.getInstance();
+        const docs = await vectorService.search(question);
+        let ragContext = "";
+        if (docs.length > 0) {
+            ragContext = "\n\nRelevant Knowledge Base:\n" + docs.map(d => `- ${d.text}`).join('\n');
+            console.log(`[AIOrchestrator] Retrieved ${docs.length} chunks for context.`);
+        }
+
+        const systemPrompt = BEHAVIORAL_SYSTEM_PROMPT.replace('{{context}}', context + ragContext);
 
         let tools: any[] = [];
         try {
@@ -60,7 +74,18 @@ export class AIOrchestrator {
     async streamCodingAssist(question: string, code: string, screenSnapshot: string, providerId: string = 'openai') {
         await this.ensureMcpConnected();
         const provider = this.router.getProvider(providerId);
-        const systemPrompt = CODING_SYSTEM_PROMPT.replace('{{screenContext}}', screenSnapshot ? 'Image attached.' : 'No screen context.');
+
+
+        // RAG Retrieval
+        const vectorService = VectorService.getInstance();
+        const docs = await vectorService.search(question);
+        let ragContext = "";
+        if (docs.length > 0) {
+            ragContext = "\n\nRelevant Knowledge Base:\n" + docs.map(d => `- ${d.text}`).join('\n');
+            console.log(`[AIOrchestrator] Retrieved ${docs.length} chunks for code.`);
+        }
+
+        const systemPrompt = CODING_SYSTEM_PROMPT.replace('{{screenContext}}', (screenSnapshot ? 'Image attached.' : 'No screen context.') + ragContext);
 
         let tools: any[] = [];
         try {
@@ -119,6 +144,58 @@ export class AIOrchestrator {
             tools: [],
             toolExecutor: async () => ''
         });
+    }
+
+    async streamSystemDesign(problem: string, context: string, providerId: string = 'ollama') {
+        await this.ensureMcpConnected();
+        // Reuse behavioral for now or create specific
+        return this.streamBehavioralAnswer(problem, context, providerId);
+    }
+
+    async streamMeetingAssist(message: string, context: string, screenSnapshot: string, providerId: string = 'ollama') {
+        await this.ensureMcpConnected();
+        const provider = this.router.getProvider(providerId);
+
+        // System Prompt
+        const systemPrompt = MEETING_SYSTEM_PROMPT.replace('{{context}}', context);
+
+        // Reuse streamCodingAssist as generic multimodal handler
+        return provider.streamCodingAssist(message, "", screenSnapshot, systemPrompt, {
+            tools: [],
+            toolExecutor: async () => ''
+        });
+    }
+
+    /**
+     * Agent Swarm Routing
+     */
+    async routeRequest(message: string, context: string, providerId: string = 'ollama', signals?: { image?: string }) {
+        // 1. Silent / Stealth Mode with Image -> Auto-Route to Coding/Vision
+        if ((!message || message.trim() === "") && signals?.image) {
+            console.log(`[AIOrchestrator] Image-Only Request -> Routing to CODING (Vision)`);
+            return this.streamCodingAssist("Analyze this image and provide insights.", "", signals.image, providerId);
+        }
+
+        console.log(`[AIOrchestrator] Supervisor analyzing: "${message.substring(0, 50)}..."`);
+        const classification = await this.supervisor.classify(message, providerId);
+        console.log(`[AIOrchestrator] Supervisor assigned: ${classification.agent} (${classification.reasoning})`);
+
+        switch (classification.agent) {
+            case AgentType.CODING:
+                // Pass message as question, context as code? Or empty code.
+                // Pass image signal if available
+                return this.streamCodingAssist(message, "", signals?.image || "", providerId);
+            case AgentType.KNOWLEDGE:
+                return this.streamBehavioralAnswer(message, context, providerId);
+            case AgentType.SYSTEM_DESIGN:
+                return this.streamCaseAnalysis(message, context, providerId);
+            case AgentType.MEETING:
+                return this.streamMeetingAssist(message, context, signals?.image || "", providerId);
+            case AgentType.CHAT:
+            default:
+                // Fallback to simple chat or behavioral
+                return this.streamBehavioralAnswer(message, context, providerId);
+        }
     }
 
     async close() {

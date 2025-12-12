@@ -37,6 +37,16 @@ cd ai-manager
 # 2. Generate JWT secret
 ./scripts/generate_jwt_secret.sh
 
+## Standalone Mode (Offline) 🗽
+The app can run without the Node.js backend ("Direct Mode") to save memory and reduce latency.
+
+1. **Prerequisite**: Ensure Ollama is running (`ollama serve`).
+2. **Enable**: In the Chat view, click the **Gear Icon** -> **Standalone (Offline)**.
+3. **Behavior**:
+   - The app connects directly to `localhost:11434`.
+   - **Fallback**: If Ollama Direct fails, it automatically tries the Node Backend.
+   - **Models**: Uses `qwen2.5-coder:14b` for code and `llama3.2-vision` for screenshots.
+
 # 3. Create .env file (copy from example)
 cp backend/.env.example backend/.env
 # Edit backend/.env with your API keys
@@ -51,6 +61,11 @@ curl http://localhost:3000/health
 # 6. Run the Mac client
 cd client-mac
 swift run MacInterviewCopilotApp
+
+# 7. (Optional) Run RAG Ingestion
+# To enable Knowledge Agent with custom docs:
+cd backend
+npm run ingest
 ```
 
 ---
@@ -186,6 +201,7 @@ The app is designed to be **completely undetectable**:
 | **Click-through Mode** | ✅ | Window becomes transparent to clicks |
 | **Undetectable by Browser** | ✅ | Pure native Swift, no Electron/JS footprint |
 | **Hidden from Screenshots** | ✅ | Won't appear in any screenshot API |
+| **Stealth UI Toggle** | ✅ | Hides bulky editors, leaving only Capture buttons |
 
 ### Hotkeys
 
@@ -202,17 +218,24 @@ The app is designed to be **completely undetectable**:
 |------|----------|
 | **Behavioral** | STAR method coaching for behavioral questions |
 | **Coding** | Code review, optimization, and algorithm help |
+| **System Design** | Architecture diagrams and scalability discussion |
+| **Meeting** | Real-time transcript/slide analysis for Teams/Zoom |
+| **Agent (Swarm)** | Auto-routing to the best expert (Coding, Knowledge, Meeting) |
+
+### Workflow
 
 ### Workflow
 
 1. **Press `Cmd + Shift + Space`** to open the overlay
-2. **Select mode** (Behavioral or Coding)
-3. **Add context**:
-   - Behavioral: Paste job description or role context
-   - Coding: Paste code snippet
-4. **Capture screen** (📷 button) to OCR visible text
-5. **Type your question** and click "Ask"
-6. **Stream response** appears in real-time
+2. **Select Display**: If you have multiple monitors, pick the target display from the header.
+3. **Select Mode**:
+   - **Agent (Swarm)**: Best default. Auto-detects context from text + image.
+   - **Meeting**: Use for Zoom/Teams calls. Paste transcript notes.
+   - **Coding**: Use for LeetCode. Supports Split-Screen parsing.
+4. **Stealth Mode**: Toggle "Stealth" in header to hide text boxes for minimal footprint.
+5. **Capture screen** (📷 button) to OCR visible text.
+6. **Type your question** and click "Ask".
+7. **Stream response** appears in real-time.
 
 ### Click-through Mode
 

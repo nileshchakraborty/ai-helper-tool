@@ -133,6 +133,12 @@ public class AudioCaptureService: NSObject, ObservableObject {
         if audioBuffer.count > maxSamples {
             audioBuffer.removeFirst(audioBuffer.count - maxSamples)
         }
+        
+        // Forward audio buffer to Apple Speech recognizer if active
+        // This avoids running two conflicting audio engines
+        if TranscriptionSettings.shared.provider == .appleSpeech {
+            TranscriptionService.shared.processAudioBuffer(buffer)
+        }
     }
     
     private func startSilenceDetection() {
@@ -256,21 +262,22 @@ public struct AudioRecordButton: View {
             audioService.stopRecording()
             transcriptionService.stopTranscription()
         } else {
-            // Start listening based on provider
-            switch settings.provider {
-            case .appleSpeech:
-                // Request permissions and start Apple Speech
+            // UX Improvement: If Manual, switch to Whisper Local so listening actually works
+            if settings.provider == .manual {
+                settings.provider = .whisperLocal
+            }
+            
+            // Always start audio recording engine (Single Source of Truth)
+            audioService.startRecording()
+            
+            // If Apple Speech, also start the recognizer (which now waits for buffers)
+            if settings.provider == .appleSpeech {
                 transcriptionService.checkPermissionsIfNeeded()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                
+                // Small delay to ensure engine is running before request starts? Not strictly needed but safer.
+                DispatchQueue.main.async {
                     transcriptionService.startTranscription()
                 }
-            case .whisperAPI, .whisperLocal:
-                // Start audio capture for recording
-                audioService.startRecording()
-            case .manual:
-                // Manual mode - just show the text field
-                // The transcription area will show a text field
-                break
             }
         }
     }

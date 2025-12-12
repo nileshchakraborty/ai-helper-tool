@@ -1,9 +1,10 @@
 import SwiftUI
 
-struct OverlayView: View {
+public struct OverlayView: View {
+    public init() {}
     @EnvironmentObject var appState: AppState
     
-    var body: some View {
+    public var body: some View {
         ZStack {
             // Glassy Background
             VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
@@ -77,6 +78,7 @@ struct AuthContentView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var audioService = AudioCaptureService.shared
     @StateObject private var transcriptionService = TranscriptionService.shared
+    @StateObject private var screenCapture = ScreenCaptureService.shared
     @State private var showSettings = false
     
     var body: some View {
@@ -112,6 +114,30 @@ struct AuthContentView: View {
                         .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
+                    
+                    // Display Selector
+                    Menu {
+                        Text("Select Display")
+                        Divider()
+                        ForEach(screenCapture.availableDisplays, id: \.self) { id in
+                            Button(action: { screenCapture.selectedDisplayID = id }) {
+                                if screenCapture.selectedDisplayID == id {
+                                    Label("Display \(id)", systemImage: "checkmark")
+                                } else {
+                                    Text("Display \(id)")
+                                }
+                            }
+                        }
+                        Button("Refresh") { screenCapture.refreshDisplays() }
+                    } label: {
+                        Image(systemName: "display")
+                            .font(.system(size: 14))
+                            .foregroundColor(screenCapture.availableDisplays.count > 1 ? .white : .gray)
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.05))
+                            .cornerRadius(6)
+                    }
+                    .menuStyle(.borderlessButton)
                     
                     // Settings
                     Button(action: { showSettings = true }) {
@@ -168,14 +194,14 @@ struct AuthContentView: View {
                         .padding(16)
                         .transition(.move(edge: .top).combined(with: .opacity))
                         
-                        // AI Response Display
+                                // AI Response Display
                         if isAIThinking {
                             HStack {
                                 ProgressView()
                                     .controlSize(.small)
                                 Text("Thinking...")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
                             .padding(.bottom, 8)
                         } else if !aiResponseText.isEmpty {
@@ -184,14 +210,15 @@ struct AuthContentView: View {
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.cyan)
                                 
-                                Text(aiResponseText)
+                                // MARKDOWN SUPPORT
+                                Text(.init(aiResponseText))
                                     .font(.system(size: 13))
                                     .foregroundColor(.white)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .textSelection(.enabled)
                             }
                             .padding(12)
-                            .background(Color.cyan.opacity(0.1))
+                            .background(.ultraThinMaterial) // POLISH: Material
                             .cornerRadius(10)
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.cyan.opacity(0.3), lineWidth: 1))
                             .padding(.horizontal, 16)
@@ -234,14 +261,16 @@ struct AuthContentView: View {
 
 // MARK: - Enhanced Transcription View
 struct EnhancedTranscriptionView: View {
-    @StateObject private var audioService = AudioCaptureService.shared
-    @StateObject private var transcriptionService = TranscriptionService.shared
-    @StateObject private var settings = TranscriptionSettings.shared
+    @ObservedObject var audioService = AudioCaptureService.shared
+    @ObservedObject var transcriptionService = TranscriptionService.shared
+    @ObservedObject var settings = TranscriptionSettings.shared
+    
     @State private var manualInput = ""
+    @State private var currentTranscription = ""
     
     let onSendForAssist: (String) -> Void
     
-    var currentTranscription: String {
+    var currentTranscriptionComputed: String {
         if settings.provider == .manual {
             return manualInput
         } else if !transcriptionService.transcription.isEmpty {
