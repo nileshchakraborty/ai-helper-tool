@@ -122,4 +122,5 @@ mlx.log
 # Temp files
 /tmp/
 *.b64
-*.json.tmp
+*.json.tmpclient-mac/models/*.bin
+*.bin
