@@ -24,6 +24,7 @@ export const authMiddleware = fp(async (fastify, opts) => {
             '/case/analyze',       // MBA consulting case interviews
             '/coach/natural',      // Natural conversational coaching
             '/listen/assist',      // Live audio transcription assist
+            '/image/',             // Image generation endpoints
         ];
 
         if (publicPaths.some(path => url.includes(path))) {

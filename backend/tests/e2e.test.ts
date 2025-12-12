@@ -91,15 +91,8 @@ describe('E2E Tests', () => {
         });
     });
 
-    describe('AI Flow', () => {
-        // Note: We expect LLM calls to potentially fail if no API key is set in test env,
-        // but the validation and route handler entry should work.
-        // Or we can mock the AIOrchestrator if we want strict unit tests.
-        // For E2E, we check basic inputs.
-
+    describe('AI Flow - Coach Natural', () => {
         it('should accept coach natural request', async () => {
-            // This might fail if no LLM configured, but let's see.
-            // If it returns 500 from LLM error, that means route is reached.
             const res = await client.post('/v1/ai/coach/natural')
                 .set('Authorization', `Bearer ${authToken}`)
                 .send({
@@ -107,11 +100,138 @@ describe('E2E Tests', () => {
                     session_id: sessionId
                 });
 
-            // We accept 200 (success) or 500 (LLM error)
+            // Accept 200 (success) or 500 (LLM error if not configured)
             expect([200, 500]).toContain(res.status);
         });
+    });
 
-        // Listen/assist is a streaming endpoint, hard to test with supertest fully waiting?
-        // But we can check if it accepts connection or sends headers.
+    describe('Coding Assist - Qwen 2.5 Coder', () => {
+        it('should accept coding assist request', async () => {
+            const res = await client.post('/v1/coding/assist')
+                .send({
+                    question: "Two Sum - find indices that add up to target",
+                    code: "def twoSum(nums: list[int], target: int) -> list[int]:"
+                });
+
+            // Should return streaming response or 500 if LLM not available
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should handle LRU Cache pattern (Linked List + HashMap)', async () => {
+            const res = await client.post('/v1/coding/assist')
+                .send({
+                    question: "Implement an LRU Cache with O(1) get and put",
+                    code: "class LRUCache:"
+                });
+
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should require question field', async () => {
+            const res = await client.post('/v1/coding/assist')
+                .send({ code: "def test():" });
+
+            expect(res.status).toBe(400);
+        });
+    });
+
+    describe('Behavioral Answer - STAR+L Method', () => {
+        it('should accept behavioral question', async () => {
+            const res = await client.post('/v1/behavioral/answer')
+                .send({
+                    question: "Tell me about a time you led a team through a difficult project"
+                });
+
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should handle conflict resolution scenario', async () => {
+            const res = await client.post('/v1/behavioral/answer')
+                .send({
+                    question: "Describe a conflict with a coworker and how you resolved it",
+                    context: "Software engineering role at a tech company"
+                });
+
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should require question field', async () => {
+            const res = await client.post('/v1/behavioral/answer')
+                .send({ context: "some context" });
+
+            expect(res.status).toBe(400);
+        });
+    });
+
+    describe('Case Interview - Consulting Truth Methodology', () => {
+        it('should analyze profitability case', async () => {
+            const res = await client.post('/v1/case/analyze')
+                .send({
+                    scenario: "A regional grocery chain has seen 20% profit decline over 2 years",
+                    context: "BCG case interview"
+                });
+
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should handle market entry case', async () => {
+            const res = await client.post('/v1/case/analyze')
+                .send({
+                    scenario: "Should a luxury fashion brand enter the Chinese market?",
+                    context: "McKinsey case interview"
+                });
+
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should require scenario field', async () => {
+            const res = await client.post('/v1/case/analyze')
+                .send({ context: "interview" });
+
+            expect(res.status).toBe(400);
+        });
+    });
+
+    describe('Image Providers', () => {
+        it('should return available providers', async () => {
+            const res = await client.get('/v1/ai/image/providers');
+
+            expect(res.status).toBe(200);
+            expect(res.body.providers).toBeDefined();
+            expect(res.body.default).toBeDefined();
+            expect(res.body.note).toBeDefined();
+
+            // Should have mlx and gemini keys (comfyui removed)
+            expect(typeof res.body.providers.mlx).toBe('boolean');
+            expect(typeof res.body.providers.gemini).toBe('boolean');
+        });
+
+        it('should accept diagram generation request', async () => {
+            const res = await client.post('/v1/ai/image/diagram')
+                .send({
+                    description: "Binary tree data structure",
+                    style: "architecture",
+                    colorScheme: "dark"
+                });
+
+            // May return 500 if no providers available, but should accept the request
+            expect([200, 500]).toContain(res.status);
+        }, 120000);
+
+        it('should require description for diagrams', async () => {
+            const res = await client.post('/v1/ai/image/diagram')
+                .send({ style: "architecture" });
+
+            expect(res.status).toBe(400);
+        });
+    });
+
+    describe('Health Check', () => {
+        it('should return ok', async () => {
+            const res = await client.get('/health');
+            expect(res.status).toBe(200);
+            expect(res.body.status).toBe('ok');
+        });
     });
 });
+

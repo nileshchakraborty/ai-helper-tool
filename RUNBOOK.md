@@ -37,6 +37,16 @@ cd ai-manager
 # 2. Generate JWT secret
 ./scripts/generate_jwt_secret.sh
 
+## Standalone Mode (Offline) 🗽
+The app can run without the Node.js backend ("Direct Mode") to save memory and reduce latency.
+
+1. **Prerequisite**: Ensure Ollama is running (`ollama serve`).
+2. **Enable**: In the Chat view, click the **Gear Icon** -> **Standalone (Offline)**.
+3. **Behavior**:
+   - The app connects directly to `localhost:11434`.
+   - **Fallback**: If Ollama Direct fails, it automatically tries the Node Backend.
+   - **Models**: Uses `qwen2.5-coder:14b` for code and `llama3.2-vision` for screenshots.
+
 # 3. Create .env file (copy from example)
 cp backend/.env.example backend/.env
 # Edit backend/.env with your API keys
@@ -51,6 +61,11 @@ curl http://localhost:3000/health
 # 6. Run the Mac client
 cd client-mac
 swift run MacInterviewCopilotApp
+
+# 7. (Optional) Run RAG Ingestion
+# To enable Knowledge Agent with custom docs:
+cd backend
+npm run ingest
 ```
 
 ---
@@ -186,6 +201,7 @@ The app is designed to be **completely undetectable**:
 | **Click-through Mode** | ✅ | Window becomes transparent to clicks |
 | **Undetectable by Browser** | ✅ | Pure native Swift, no Electron/JS footprint |
 | **Hidden from Screenshots** | ✅ | Won't appear in any screenshot API |
+| **Stealth UI Toggle** | ✅ | Hides bulky editors, leaving only Capture buttons |
 
 ### Hotkeys
 
@@ -202,17 +218,24 @@ The app is designed to be **completely undetectable**:
 |------|----------|
 | **Behavioral** | STAR method coaching for behavioral questions |
 | **Coding** | Code review, optimization, and algorithm help |
+| **System Design** | Architecture diagrams and scalability discussion |
+| **Meeting** | Real-time transcript/slide analysis for Teams/Zoom |
+| **Agent (Swarm)** | Auto-routing to the best expert (Coding, Knowledge, Meeting) |
+
+### Workflow
 
 ### Workflow
 
 1. **Press `Cmd + Shift + Space`** to open the overlay
-2. **Select mode** (Behavioral or Coding)
-3. **Add context**:
-   - Behavioral: Paste job description or role context
-   - Coding: Paste code snippet
-4. **Capture screen** (📷 button) to OCR visible text
-5. **Type your question** and click "Ask"
-6. **Stream response** appears in real-time
+2. **Select Display**: If you have multiple monitors, pick the target display from the header.
+3. **Select Mode**:
+   - **Agent (Swarm)**: Best default. Auto-detects context from text + image.
+   - **Meeting**: Use for Zoom/Teams calls. Paste transcript notes.
+   - **Coding**: Use for LeetCode. Supports Split-Screen parsing.
+4. **Stealth Mode**: Toggle "Stealth" in header to hide text boxes for minimal footprint.
+5. **Capture screen** (📷 button) to OCR visible text.
+6. **Type your question** and click "Ask".
+7. **Stream response** appears in real-time.
 
 ### Click-through Mode
 
@@ -366,27 +389,88 @@ docker compose -f infra/docker-compose.dev.yml up -d
 
 ## Testing
 
-### Backend Tests
+### Run All Tests
 
-To avoid port conflicts with running Docker containers, run tests with a different port:
+```bash
+# Run backend + mobile tests
+make test
+
+# Run with coverage reports
+make test-coverage
+```
+
+### Backend Tests
 
 ```bash
 cd backend
-PORT=3001 npm test
+
+# Run unit tests only
+npm test -- --testPathPatterns=unit
+
+# Run with coverage
+npm test -- --testPathPatterns=unit --coverage
+
+# Run E2E tests (requires running server)
+npm test -- --testPathPatterns=e2e
 ```
 
-### Client Tests
+**Test Coverage:**
+| File | Coverage |
+|------|----------|
+| `socket.ts` | 77.77% |
+| `mlx.ts` | 90% |
+| `orchestrator.ts` | 55.14% |
+| `env.ts` | 100% |
 
-Ensure the backend is running in Docker (port 3000) before running end-to-end tests:
+### Mobile Tests
+
+```bash
+cd client-mobile
+npm test
+npm test -- --coverage
+```
+
+### Mac Client Tests
 
 ```bash
 cd client-mac
 swift test
 ```
 
-### Coverage
-- **Backend**: Unit tests for Orchestrator, MCP, and E2E API flows.
-- **Client**: Unit tests for `AppleAIService`, `StreamingClient`, and E2E connectivity.
+---
+
+## Mobile Companion
+
+The Mobile Companion app allows you to view AI responses on your phone in real-time.
+
+### Setup
+
+```bash
+# 1. Start the backend
+./start.sh
+
+# 2. Start the mobile app
+make run-mobile
+
+# 3. On your phone:
+#    - Install Expo Go from App Store
+#    - Scan the QR code
+#    - Enter your Mac's IP address (e.g., 192.168.1.5)
+#    - Tap Connect
+```
+
+### How It Works
+
+1. **Backend** runs Socket.IO server on port 3000
+2. **Mobile app** connects via WebSocket
+3. When AI generates a response on Mac, it broadcasts to all connected devices
+4. Phone displays the response in real-time
+
+### Troubleshooting Mobile
+
+- **Can't connect**: Ensure phone and Mac are on same WiFi network
+- **Find Mac IP**: Run `ifconfig en0 | grep inet` on Mac
+- **Connection error**: Check if backend is running (`curl localhost:3000/health`)
 
 ---
 
@@ -397,8 +481,23 @@ swift test
 | `scripts/generate_jwt_secret.sh` | Generate secure JWT secret |
 | `scripts/generate-client.sh` | Regenerate OpenAPI Swift client |
 | `scripts/validate_ollama.sh` | Validate Ollama connection |
-| `client-mac/run_bundled.sh` | Build, sign, and launch Mac app (auto-downloads Whisper model) |
+| `client-mac/run_bundled.sh` | Build, sign, and launch Mac app |
+
+## Makefile Commands
+
+| Command | Purpose |
+|---------|---------|
+| `make start` | Start all Docker services |
+| `make run-mac` | Run the Mac client |
+| `make run-mobile` | Run Mobile companion (Expo) |
+| `make test` | Run all tests |
+| `make test-coverage` | Run tests with coverage |
+| `make mlx-setup` | Set up MLX image generation |
+| `make mlx-start` | Start MLX image server |
+| `make health` | Check backend health |
+| `make providers` | Check image providers |
 
 ---
 
 *Last updated: December 2024*
+

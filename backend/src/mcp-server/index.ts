@@ -4,6 +4,7 @@ import os from "os";
 import { registerProfileTools } from "./tools/profile-tools";
 import { registerSessionTools } from "./tools/session-tools";
 import { registerAITools } from "./tools/ai-tools";
+import { registerImageTools } from "./tools/image-tools";
 
 // Create server instance
 const server = new McpServer({
@@ -38,12 +39,13 @@ server.tool(
 registerProfileTools(server);
 registerSessionTools(server);
 registerAITools(server);
+registerImageTools(server);
 
 async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("MCP Server running on stdio");
-    console.error("Registered tools: get_system_info, get_profile, update_preferences, start_session, add_message, get_history, get_session_messages, behavioral_answer, coding_assist");
+    console.error("Registered tools: get_system_info, get_profile, update_preferences, start_session, add_message, get_history, get_session_messages, behavioral_answer, coding_assist, generate_diagram, generate_flashcard, generate_visualization, convert_whiteboard");
 }
 
 main().catch((error) => {

@@ -5,6 +5,8 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+    env_file:
+      - ../.env
     environment:
       - NODE_ENV=development
       - PORT=3000
@@ -14,8 +16,11 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5-coder:14b}
       - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
+      # MLX runs on host machine (localhost:8189), not in Docker
+      # Use host.docker.internal on Mac to access host services
+      - MLX_IMAGE_HOST=http://host.docker.internal:8189
     ports:
       - "3000:3000"
     depends_on:
@@ -23,6 +28,9 @@ services:
       - redis
       - ollama
     command: npm start
+    # Allow access to host network for MLX service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   ollama:
     image: ollama/ollama:latest
@@ -30,8 +38,7 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    # Pull a model on startup (optional, can be done manually)
-    # command: ollama pull llama3.2
+
   postgres:
     image: postgres:15-alpine
     restart: always

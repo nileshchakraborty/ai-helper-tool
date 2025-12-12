@@ -128,4 +128,12 @@ export class OpenAIProvider implements AIProvider {
 
         return generator();
     }
+    async streamChat(message: string, systemPrompt: string, options?: AIStreamOptions): Promise<AsyncIterable<string>> {
+        const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message }
+        ];
+
+        return this.createStream(messages, options);
+    }
 }
