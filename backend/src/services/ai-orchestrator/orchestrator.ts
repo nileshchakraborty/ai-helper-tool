@@ -4,6 +4,7 @@ import { BEHAVIORAL_SYSTEM_PROMPT, CODING_SYSTEM_PROMPT, CASE_INTERVIEW_SYSTEM_P
 import { MCPClientService } from '../mcp/client';
 import { VectorService } from '../VectorService';
 import { SupervisorAgent, AgentType } from './agents/SupervisorAgent';
+import { broadcastToMobile } from '../../gateway/socket';
 
 export class AIOrchestrator {
     private router: AIRouter;
@@ -62,13 +63,14 @@ export class AIOrchestrator {
             console.warn('Failed to list tools', e);
         }
 
-        return provider.streamBehavioralAnswer(question, context, systemPrompt, {
+        const stream = await provider.streamBehavioralAnswer(question, context, systemPrompt, {
             tools,
             toolExecutor: async (name, args) => {
                 const res = await this.mcpClient.callTool(name, args);
                 return res.content;
             }
         });
+        return this.broadcastStream(stream);
     }
 
     async streamCodingAssist(question: string, code: string, screenSnapshot: string, providerId: string = 'openai') {
@@ -95,13 +97,14 @@ export class AIOrchestrator {
             console.warn('Failed to list tools', e);
         }
 
-        return provider.streamCodingAssist(question, code, screenSnapshot, systemPrompt, {
+        const stream = await provider.streamCodingAssist(question, code, screenSnapshot, systemPrompt, {
             tools,
             toolExecutor: async (name, args) => {
                 const res = await this.mcpClient.callTool(name, args);
                 return res.content;
             }
         });
+        return this.broadcastStream(stream);
     }
 
     async streamCaseAnalysis(caseDescription: string, context: string, providerId: string = 'ollama') {
@@ -140,10 +143,11 @@ export class AIOrchestrator {
             .replace('{{transcription}}', transcription)
             .replace('{{interviewType}}', interviewType);
 
-        return provider.streamBehavioralAnswer(transcription, interviewType, systemPrompt, {
+        const stream = await provider.streamBehavioralAnswer(transcription, interviewType, systemPrompt, {
             tools: [],
             toolExecutor: async () => ''
         });
+        return this.broadcastStream(stream);
     }
 
     async streamSystemDesign(problem: string, context: string, providerId: string = 'ollama') {
@@ -204,5 +208,12 @@ export class AIOrchestrator {
             this.mcpInitialized = false;
             this.mcpInitPromise = null;
         }
+    }
+    private async *broadcastStream(stream: AsyncIterable<string>): AsyncGenerator<string, void, unknown> {
+        for await (const chunk of stream) {
+            broadcastToMobile('ai:stream', { text: chunk });
+            yield chunk;
+        }
+        broadcastToMobile('ai:stream:done', {});
     }
 }

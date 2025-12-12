@@ -389,27 +389,88 @@ docker compose -f infra/docker-compose.dev.yml up -d
 
 ## Testing
 
-### Backend Tests
+### Run All Tests
 
-To avoid port conflicts with running Docker containers, run tests with a different port:
+```bash
+# Run backend + mobile tests
+make test
+
+# Run with coverage reports
+make test-coverage
+```
+
+### Backend Tests
 
 ```bash
 cd backend
-PORT=3001 npm test
+
+# Run unit tests only
+npm test -- --testPathPatterns=unit
+
+# Run with coverage
+npm test -- --testPathPatterns=unit --coverage
+
+# Run E2E tests (requires running server)
+npm test -- --testPathPatterns=e2e
 ```
 
-### Client Tests
+**Test Coverage:**
+| File | Coverage |
+|------|----------|
+| `socket.ts` | 77.77% |
+| `mlx.ts` | 90% |
+| `orchestrator.ts` | 55.14% |
+| `env.ts` | 100% |
 
-Ensure the backend is running in Docker (port 3000) before running end-to-end tests:
+### Mobile Tests
+
+```bash
+cd client-mobile
+npm test
+npm test -- --coverage
+```
+
+### Mac Client Tests
 
 ```bash
 cd client-mac
 swift test
 ```
 
-### Coverage
-- **Backend**: Unit tests for Orchestrator, MCP, and E2E API flows.
-- **Client**: Unit tests for `AppleAIService`, `StreamingClient`, and E2E connectivity.
+---
+
+## Mobile Companion
+
+The Mobile Companion app allows you to view AI responses on your phone in real-time.
+
+### Setup
+
+```bash
+# 1. Start the backend
+./start.sh
+
+# 2. Start the mobile app
+make run-mobile
+
+# 3. On your phone:
+#    - Install Expo Go from App Store
+#    - Scan the QR code
+#    - Enter your Mac's IP address (e.g., 192.168.1.5)
+#    - Tap Connect
+```
+
+### How It Works
+
+1. **Backend** runs Socket.IO server on port 3000
+2. **Mobile app** connects via WebSocket
+3. When AI generates a response on Mac, it broadcasts to all connected devices
+4. Phone displays the response in real-time
+
+### Troubleshooting Mobile
+
+- **Can't connect**: Ensure phone and Mac are on same WiFi network
+- **Find Mac IP**: Run `ifconfig en0 | grep inet` on Mac
+- **Connection error**: Check if backend is running (`curl localhost:3000/health`)
 
 ---
 
@@ -420,8 +481,23 @@ swift test
 | `scripts/generate_jwt_secret.sh` | Generate secure JWT secret |
 | `scripts/generate-client.sh` | Regenerate OpenAPI Swift client |
 | `scripts/validate_ollama.sh` | Validate Ollama connection |
-| `client-mac/run_bundled.sh` | Build, sign, and launch Mac app (auto-downloads Whisper model) |
+| `client-mac/run_bundled.sh` | Build, sign, and launch Mac app |
+
+## Makefile Commands
+
+| Command | Purpose |
+|---------|---------|
+| `make start` | Start all Docker services |
+| `make run-mac` | Run the Mac client |
+| `make run-mobile` | Run Mobile companion (Expo) |
+| `make test` | Run all tests |
+| `make test-coverage` | Run tests with coverage |
+| `make mlx-setup` | Set up MLX image generation |
+| `make mlx-start` | Start MLX image server |
+| `make health` | Check backend health |
+| `make providers` | Check image providers |
 
 ---
 
 *Last updated: December 2024*
+

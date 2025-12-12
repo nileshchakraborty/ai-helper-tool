@@ -62,7 +62,19 @@ build: ## Build backend
 
 test: ## Run all tests
 	@echo "🧪 Running Backend Tests..."
-	cd backend && npm test
+	cd backend && npm test -- --testPathPatterns=unit
+	@echo "🧪 Running Mobile Tests..."
+	cd client-mobile && npm test
+
+test-coverage: ## Run tests with coverage report
+	@echo "📊 Running Backend Tests with Coverage..."
+	cd backend && npm test -- --testPathPatterns=unit --coverage
+	@echo "📊 Running Mobile Tests with Coverage..."
+	cd client-mobile && npm test -- --coverage
+
+test-mobile: ## Run mobile tests only
+	@echo "📱 Running Mobile Tests..."
+	cd client-mobile && npm test
 
 test-mac: ## Run Mac client tests
 	@echo "🧪 Running Client Tests..."
@@ -80,7 +92,37 @@ clean:
 
 run-mac: ## Run Mac app
 	@echo "🖥️ Running Mac App..."
-	cd client-mac && ./run_bundled.sh
+	@if [ -d "client-mac/MacInterviewCopilot.app/Contents" ]; then \
+		echo "   📱 Found existing app bundle - launching..."; \
+		open client-mac/MacInterviewCopilot.app; \
+	else \
+		echo "   🔨 Building app..."; \
+		cd client-mac && ./run_bundled.sh; \
+	fi
+
+rebuild-mac: ## Rebuild Mac app (production-signed)
+	@echo "🔨 Building production-signed Mac app..."
+	@rm -rf client-mac/MacInterviewCopilot.app
+	cd client-mac && xcodebuild -scheme MacInterviewCopilot -configuration Release \
+		-derivedDataPath build \
+		DEVELOPMENT_TEAM=H6H9D7K348 \
+		CODE_SIGN_IDENTITY="Apple Development" \
+		CODE_SIGN_STYLE=Automatic \
+		-destination 'platform=macOS,arch=arm64' \
+		-quiet
+	@mkdir -p client-mac/MacInterviewCopilot.app/Contents/MacOS
+	@mkdir -p client-mac/MacInterviewCopilot.app/Contents/Resources
+	@cp client-mac/build/Build/Products/Release/MacInterviewCopilotApp client-mac/MacInterviewCopilot.app/Contents/MacOS/
+	@cp client-mac/MacInterviewCopilot/Info.plist client-mac/MacInterviewCopilot.app/Contents/
+	@if [ -f "client-mac/models/ggml-base.en.bin" ]; then cp client-mac/models/ggml-base.en.bin client-mac/MacInterviewCopilot.app/Contents/Resources/; fi
+	@codesign --force --deep --sign "Apple Development" --entitlements client-mac/entitlements.plist client-mac/MacInterviewCopilot.app
+	@echo "✅ Build complete! Run: make run-mac"
+
+run-mobile: ## Run Mobile companion (Expo)
+	@echo "📱 Starting Mobile Companion..."
+	@echo "   Scan QR code with Expo Go app on your phone"
+	@echo "   Enter your Mac's IP address in the app to connect"
+	cd client-mobile && npx expo start
 
 providers: ## Check image provider status
 	@curl -s http://localhost:3000/v1/ai/image/providers | jq .

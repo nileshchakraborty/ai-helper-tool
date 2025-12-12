@@ -40,7 +40,7 @@ public class ScreenCaptureService: NSObject, ObservableObject {
         let targetID = displayId ?? selectedDisplayID
         
         guard let cgImage = CGDisplayCreateImage(targetID) else {
-            self.error = "Failed to capture display \(targetID)"
+            self.error = "Screen capture failed. Please grant Screen Recording permission in System Settings > Privacy & Security > Screen & System Audio Recording"
             return nil
         }
         let image = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
@@ -48,3 +48,4 @@ public class ScreenCaptureService: NSObject, ObservableObject {
         return image
     }
 }
+

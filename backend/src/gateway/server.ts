@@ -11,6 +11,7 @@ import profileRoutes from './routes/profile-routes';
 import sessionRoutes from './routes/session-routes';
 import { imageRoutes } from './routes/image-routes';
 import { checkServicesHealth } from './startup-health';
+import { initSocket } from './socket';
 
 const buildServer = async () => {
     const server = Fastify({
@@ -41,6 +42,10 @@ const buildServer = async () => {
 export const startServer = async () => {
     try {
         const server = await buildServer();
+
+        // Initialize Socket.IO
+        initSocket(server);
+
         await server.listen({ port: env.PORT, host: '0.0.0.0' });
         console.log(`Server running at http://localhost:${env.PORT}`);
 

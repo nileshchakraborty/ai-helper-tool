@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 
 APP_NAME="MacInterviewCopilot.app"
 EXECUTABLE_NAME="MacInterviewCopilotApp"
+BUNDLE_ID="com.interview.copilot"
 
 echo "Building MacInterviewCopilot..."
 swift build -c debug
@@ -30,7 +31,7 @@ fi
 
 cp "$CACHE_PATH" "$APP_NAME/Contents/Resources/"
 
-# Create Entitlements for TCC
+# Create Entitlements for TCC (Screen Recording + Mic)
 cat > entitlements.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -46,9 +47,12 @@ cat > entitlements.plist <<EOF
 </plist>
 EOF
 
-echo "Signing with entitlements..."
-codesign --force --deep --sign - --entitlements entitlements.plist "$APP_NAME"
+# Use ad-hoc signing (avoids keychain prompts)
+# Permissions persist if you use ./launch.sh instead of rebuilding
+echo "Signing with entitlements (ad-hoc)..."
+codesign --force --deep --sign - --entitlements entitlements.plist --identifier "$BUNDLE_ID" "$APP_NAME"
 
 echo "Launching bundled app..."
 # Use open -W to wait for the app to finish (and ensure it runs as a bundle for TCC headers)
 open -W "$APP_NAME"
+

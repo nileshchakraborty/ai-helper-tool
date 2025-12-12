@@ -78,4 +78,4 @@ curl -s http://localhost:3000/health > /dev/null && echo "   Health Check: OK"
 
 # Step 6: Launch Client
 echo "🖥️  Starting Mac Client..."
-./client-mac/run_bundled.sh
+make run-mac

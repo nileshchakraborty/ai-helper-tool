@@ -73,3 +73,52 @@ client-mac/MacInterviewCopilot.app/
 cmake_install.cmake
 CMakeCache.txt
 CMakeFiles/
+
+# Mobile / React Native / Expo
+client-mobile/.expo/
+client-mobile/android/
+client-mobile/ios/
+*.hprof
+.expo/
+web-build/
+
+# Expo
+.expo-shared/
+
+# Metro
+.metro-health-check*
+
+# Native builds
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Bundle artifact
+*.jsbundle
+
+# CocoaPods (iOS only)
+client-mobile/ios/Pods/
+
+# Jest coverage
+client-mobile/coverage/
+backend/coverage/
+*.cer
+
+# Mac Client Build Artifacts
+client-mac/build/
+client-mac/*.log
+client-mac/MacInterviewCopilot.app/
+
+# Logs
+*.log
+backend.log
+ollama.log
+mlx.log
+
+# Temp files
+/tmp/
+*.b64
+*.json.tmp

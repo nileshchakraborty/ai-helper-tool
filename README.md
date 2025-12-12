@@ -17,6 +17,8 @@ A privacy-first macOS interview copilot that provides real-time behavioral and c
 - 🌐 **Platform Native** - Intelligent split-screen parsing for LeetCode & HackerRank.
 - 🧠 **Lightweight RAG** - In-memory vector search for custom documentation context.
 - 🔑 **MCP Integration** - Model Context Protocol for extensible AI tools
+- 📱 **Mobile Companion** - Real-time AI feed on your phone via Socket.IO
+- 🎨 **MLX Image Generation** - Local FLUX.1 image generation on Apple Silicon
 
 ## Quick Start
 
@@ -76,11 +78,32 @@ Mac Client (Swift)  ─────────► Backend (Node.js/Fastify)
 | Component | Technology |
 |-----------|------------|
 | **Mac Client** | Swift, SwiftUI, Vision (OCR) |
-| **Backend** | Node.js, TypeScript, Fastify |
-| **AI Providers** | Ollama (local), OpenAI, Anthropic |
+| **Mobile Client** | React Native, Expo, Socket.IO |
+| **Backend** | Node.js, TypeScript, Fastify, Socket.IO |
+| **AI Providers** | Ollama (local), OpenAI, Anthropic, MLX |
 | **MCP Server** | Model Context Protocol for AI tools |
 | **Database** | PostgreSQL (persistence), Redis (cache) |
-| **Streaming** | Server-Sent Events (SSE) |
+| **Streaming** | Server-Sent Events (SSE), WebSocket |
+
+## Testing
+
+```bash
+# Run all tests (backend + mobile)
+make test
+
+# Run with coverage reports
+make test-coverage
+
+# Run mobile tests only
+make test-mobile
+
+# Run Mac client tests
+make test-mac
+```
+
+**Test Coverage:**
+- Backend: 30 tests (socket, MLX, orchestrator, routes, MCP)
+- Mobile: 12 tests (socket connection, validation, state)
 
 ## Environment Variables
 
@@ -104,6 +127,18 @@ See [backend/.env.example](./backend/.env.example) for all options.
 | `scripts/generate_jwt_secret.sh` | Generate secure JWT secret |
 | `scripts/generate-client.sh` | Regenerate OpenAPI Swift client |
 | `scripts/validate_ollama.sh` | Validate Ollama connection |
+
+## Makefile Commands
+
+| Command | Purpose |
+|---------|--------|
+| `make start` | Start all services (Docker + backend) |
+| `make run-mac` | Run the Mac client |
+| `make run-mobile` | Run the Mobile companion (Expo) |
+| `make test` | Run all tests |
+| `make test-coverage` | Run tests with coverage |
+| `make mlx-setup` | Set up MLX image generation |
+| `make health` | Check backend health |
 
 ## Privacy
 
