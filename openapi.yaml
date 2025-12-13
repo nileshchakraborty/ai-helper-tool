@@ -2,8 +2,8 @@ openapi: 3.0.3
 info:
   title: Mac Interview Copilot API
   version: 1.0.0
-  description: >
-    Backend API for Mac Interview Copilot (Node/Fastify). 
+  description: |
+    Backend API for Mac Interview Copilot (Node/Fastify).
     Supports SSE (Server-Sent Events) for streaming AI responses.
 
 servers:
@@ -38,7 +38,6 @@ components:
       type: object
       properties:
         accessToken: { type: string }
-        refreshToken: { type: string }
         user: { $ref: "#/components/schemas/UserProfile" }
 
     # --- Profile ---
@@ -48,68 +47,137 @@ components:
         id: { type: string }
         email: { type: string }
         fullName: { type: string }
-        preferences:
-          type: object
-          properties:
-            saveSessionHistory: { type: boolean }
-            dataRetentionDays: { type: integer }
+        preferences: { $ref: "#/components/schemas/UserProfilePreferences" }
+
+    UserProfilePreferences:
+      type: object
+      properties:
+        privacyMode:
+          type: boolean
+          description: If true, session history is not saved
+        modelProvider:
+          type: string
+          enum: [openai, anthropic, ollama]
+        theme:
+          type: string
+          enum: [light, dark]
 
     # --- Session ---
     Session:
       type: object
       properties:
-        id:
-          type: string
-        userId:
-          type: string
-        title:
-          type: string
+        id: { type: string }
+        userId: { type: string }
+        title: { type: string }
         type:
           type: string
           enum: [behavioral, coding]
-        status:
-          type: string
-        createdAt:
-          type: string
+        status: { type: string }
+        createdAt: { type: string }
 
-    # --- Payloads ---
+    # --- SSE Events ---
+    SSETokenEvent:
+      type: object
+      description: SSE event for streaming tokens
+      properties:
+        text: { type: string }
+
+    SSEErrorEvent:
+      type: object
+      properties:
+        error: { type: string }
+
+    # --- AI Request Payloads ---
     BehavioralStreamRequest:
       type: object
-      required:
-        - question
-        - context
+      required: [question, context]
       properties:
-        question:
-          type: string
-        context:
-          type: string
+        question: { type: string }
+        context: { type: string }
         provider:
           type: string
-        sessionId:
-          type: string
+          enum: [openai, anthropic, ollama]
+          default: ollama
+        sessionId: { type: string }
 
     CodingStreamRequest:
       type: object
-      required:
-        - question
-        - code
+      required: [question, code]
       properties:
-        question:
-          type: string
-        code:
-          type: string
+        question: { type: string }
+        code: { type: string }
         screenSnapshot:
           type: string
+          description: Optional base64 screenshot
         provider:
           type: string
-        sessionId:
+          enum: [openai, anthropic, ollama]
+          default: ollama
+        sessionId: { type: string }
+
+    CoachNaturalRequest:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string }
+        context: { type: string }
+        provider:
           type: string
-        screenContext:
-          {
-            type: string,
-            format: binary,
-            description: "Optional screenshot bytes",
-          }
+          enum: [openai, anthropic, ollama]
+          default: ollama
+
+    ListenAssistRequest:
+      type: object
+      required: [transcription]
+      properties:
+        transcription: { type: string }
+        interviewType:
+          type: string
+          enum: [behavioral, coding]
+          default: behavioral
+        provider:
+          type: string
+          enum: [openai, anthropic, ollama]
+          default: ollama
+
+    CaseAnalysisRequest:
+      type: object
+      required: [caseDescription]
+      properties:
+        caseDescription: { type: string }
+        context: { type: string }
+        provider:
+          type: string
+          enum: [openai, anthropic, ollama]
+          default: ollama
+        sessionId: { type: string }
+
+    SystemDesignRequest:
+      type: object
+      required: [problem]
+      properties:
+        problem: { type: string }
+        context: { type: string }
+        provider:
+          type: string
+          enum: [openai, anthropic, ollama]
+          default: ollama
+        sessionId: { type: string }
+
+    AgentChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        context: { type: string }
+        provider:
+          type: string
+          enum: [openai, anthropic, ollama]
+          default: ollama
+        sessionId: { type: string }
+        signals:
+          type: object
+          description: Multimodal signals for routing
 
 paths:
   # --- Auth ---
@@ -143,10 +211,11 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AuthResponse" }
 
-  # --- Streaming Endpoints (SSE) ---
+  # --- Profile ---
   /profile:
     get:
       summary: Get user profile
+      tags: [Profile]
       security:
         - bearerAuth: []
       responses:
@@ -154,28 +223,30 @@ paths:
           description: User profile
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfile"
+              schema: { $ref: "#/components/schemas/UserProfile" }
+
   /profile/preferences:
     patch:
       summary: Update user preferences
+      tags: [Profile]
       security:
         - bearerAuth: []
       requestBody:
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/UserProfilePreferences"
+            schema: { $ref: "#/components/schemas/UserProfilePreferences" }
       responses:
         "200":
           description: Updated profile
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfile"
+              schema: { $ref: "#/components/schemas/UserProfile" }
+
+  # --- Sessions ---
   /sessions:
     post:
       summary: Start a new session
+      tags: [Sessions]
       security:
         - bearerAuth: []
       requestBody:
@@ -184,8 +255,7 @@ paths:
             schema:
               type: object
               properties:
-                title:
-                  type: string
+                title: { type: string }
                 type:
                   type: string
                   enum: [behavioral, coding]
@@ -194,10 +264,10 @@ paths:
           description: Created session
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Session"
+              schema: { $ref: "#/components/schemas/Session" }
     get:
       summary: Get session history
+      tags: [Sessions]
       security:
         - bearerAuth: []
       responses:
@@ -207,19 +277,19 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Session"
+                items: { $ref: "#/components/schemas/Session" }
+
   /sessions/{id}/messages:
     get:
       summary: Get session messages
+      tags: [Sessions]
       security:
         - bearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
           description: List of messages
@@ -230,24 +300,25 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
-                      type: string
-                    role:
-                      type: string
-                    content:
-                      type: string
-                    createdAt:
-                      type: string
-  # --- Streaming Endpoints (SSE) ---
+                    id: { type: string }
+                    role: { type: string }
+                    content: { type: string }
+                    createdAt: { type: string }
 
-  # Note: AI Routes are prefixed with /ai in implementation
+  # --- AI Streaming Endpoints (SSE) ---
+  # SSE Contract:
+  # - event: data with JSON { text: string } for tokens
+  # - event: data with JSON { error: string } for errors
+  # - event: data: [DONE] signals stream end
 
-  /ai/behavioral/answer:
+  /behavioral/answer:
     post:
       summary: Get behavioral coaching (Streamed)
       tags: [Behavioral]
       security: [{ bearerAuth: [] }]
-      description: Returns text/event-stream with chunks.
+      description: |
+        Returns text/event-stream with chunks.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
       requestBody:
         required: true
         content:
@@ -260,11 +331,14 @@ paths:
             text/event-stream:
               schema: { type: string }
 
-  /ai/coding/assist:
+  /coding/assist:
     post:
       summary: Get coding assistance (Streamed)
       tags: [Coding]
       security: [{ bearerAuth: [] }]
+      description: |
+        Returns text/event-stream with chunks.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
       requestBody:
         required: true
         content:
@@ -277,21 +351,19 @@ paths:
             text/event-stream:
               schema: { type: string }
 
-  /ai/coach/natural:
+  /coach/natural:
     post:
       summary: Conversational coaching (Streamed)
       tags: [Behavioral]
       security: [{ bearerAuth: [] }]
+      description: |
+        Returns text/event-stream with natural talking points.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [text, session_id]
-              properties:
-                text: { type: string }
-                session_id: { type: string }
+            schema: { $ref: "#/components/schemas/CoachNaturalRequest" }
       responses:
         "200":
           description: SSE Stream
@@ -299,23 +371,19 @@ paths:
             text/event-stream:
               schema: { type: string }
 
-  /ai/listen/assist:
+  /listen/assist:
     post:
       summary: Live interview assistance (Streamed)
       tags: [Live]
       security: [{ bearerAuth: [] }]
+      description: |
+        Real-time help from audio transcription.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [text, session_id]
-              properties:
-                text: { type: string }
-                session_id: { type: string }
-                context_image:
-                  { type: string, description: "Base64 encoded image" }
+            schema: { $ref: "#/components/schemas/ListenAssistRequest" }
       responses:
         "200":
           description: SSE Stream
@@ -323,9 +391,91 @@ paths:
             text/event-stream:
               schema: { type: string }
 
-  /ai/image/diagram:
+  /case/analyze:
     post:
-      summary: Generate architecture diagram (Nano Banana)
+      summary: MBA case interview analysis (Streamed)
+      tags: [Case]
+      security: [{ bearerAuth: [] }]
+      description: |
+        MBA consulting case interview analysis.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CaseAnalysisRequest" }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  /system-design/analyze:
+    post:
+      summary: System design interview (Streamed)
+      tags: [SystemDesign]
+      security: [{ bearerAuth: [] }]
+      description: |
+        System design interview with Mermaid diagrams.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SystemDesignRequest" }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  /agent/chat:
+    post:
+      summary: Automated routing with multimodal signals (Streamed)
+      tags: [Agent]
+      security: [{ bearerAuth: [] }]
+      description: |
+        Routes requests automatically based on content and signals.
+        Events: `data: {"text":"..."}\n\n` for tokens, `data: [DONE]\n\n` for end.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentChatRequest" }
+      responses:
+        "200":
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  # --- Image Generation (consistent /v1/image/* namespace) ---
+  /image/providers:
+    get:
+      summary: Get available image providers status
+      tags: [Image]
+      responses:
+        "200":
+          description: Provider status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: object
+                    properties:
+                      mlx: { type: boolean }
+                      gemini: { type: boolean }
+                  default: { type: string }
+                  status: { type: string }
+                  activeProvider: { type: string }
+
+  /image/diagram:
+    post:
+      summary: Generate architecture diagram
       tags: [Image]
       requestBody:
         required: true
@@ -345,19 +495,20 @@ paths:
                   enum: [dark, light, colorful]
       responses:
         "200":
-          description: Generated diagram description
+          description: Generated diagram
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   success: { type: boolean }
-                  content: { type: string }
+                  imageBase64: { type: string }
                   mimeType: { type: string }
+                  provider: { type: string }
 
-  /ai/image/flashcard:
+  /image/flashcard:
     post:
-      summary: Generate interview prep flashcard (Nano Banana)
+      summary: Generate interview prep flashcard
       tags: [Image]
       requestBody:
         required: true
@@ -381,11 +532,13 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  content: { type: string }
+                  imageBase64: { type: string }
+                  mimeType: { type: string }
+                  provider: { type: string }
 
-  /ai/image/visualization:
+  /image/visualization:
     post:
-      summary: Generate code/algorithm visualization (Nano Banana)
+      summary: Generate code/algorithm visualization
       tags: [Image]
       requestBody:
         required: true
@@ -408,10 +561,51 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  content: { type: string }
+                  imageBase64: { type: string }
+                  mimeType: { type: string }
+                  provider: { type: string }
+
+  /image/generate:
+    post:
+      summary: Generate custom image
+      tags: [Image]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt: { type: string }
+                width: { type: integer }
+                height: { type: integer }
+                steps: { type: integer }
+                seed: { type: integer }
+                negativePrompt: { type: string }
+      responses:
+        "200":
+          description: Generated image
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  imageBase64: { type: string }
+                  mimeType: { type: string }
+                  provider: { type: string }
 
   /health:
     get:
       summary: Health check
+      tags: [System]
       responses:
-        "200": { description: OK }
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }

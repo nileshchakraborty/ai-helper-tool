@@ -1,7 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { ProfileRepository } from '../../services/profile/profile-repository';
+
+const BCRYPT_ROUNDS = 12;
 
 const signupSchema = z.object({
     email: z.string().email(),
@@ -14,6 +17,11 @@ const loginSchema = z.object({
     password: z.string(),
 });
 
+// Check if a stored password is a bcrypt hash
+function isBcryptHash(stored: string): boolean {
+    return stored.startsWith('$2a$') || stored.startsWith('$2b$') || stored.startsWith('$2y$');
+}
+
 const authRoutes: FastifyPluginAsync = async (fastify) => {
     const profileRepo = new ProfileRepository();
 
@@ -25,8 +33,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
             return reply.code(409).send({ message: 'User already exists' });
         }
 
-        // TODO: Hash password properly with bcrypt/argon2
-        const user = await profileRepo.create(body.email, body.fullName, body.password);
+        const passwordHash = await bcrypt.hash(body.password, BCRYPT_ROUNDS);
+        const user = await profileRepo.create(body.email, body.fullName, passwordHash);
         const token = fastify.jwt.sign({ id: user.id, email: user.email });
 
         return { user, accessToken: token };
@@ -36,7 +44,27 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         const body = loginSchema.parse(request.body);
 
         const user = await profileRepo.findByEmailForAuth(body.email);
-        if (!user || user.password_hash !== body.password) { // TODO: Compare hash
+        if (!user) {
+            // Consistent error message to prevent account enumeration
+            return reply.code(401).send({ message: 'Invalid credentials' });
+        }
+
+        let validPassword = false;
+
+        if (isBcryptHash(user.password_hash)) {
+            // Modern: compare with bcrypt
+            validPassword = await bcrypt.compare(body.password, user.password_hash);
+        } else {
+            // Legacy: plaintext comparison, then migrate
+            validPassword = user.password_hash === body.password;
+            if (validPassword) {
+                // Migrate legacy password to bcrypt hash
+                const newHash = await bcrypt.hash(body.password, BCRYPT_ROUNDS);
+                await profileRepo.updatePasswordHash(user.id, newHash);
+            }
+        }
+
+        if (!validPassword) {
             return reply.code(401).send({ message: 'Invalid credentials' });
         }
 
@@ -46,3 +74,5 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 };
 
 export default authRoutes;
+
+

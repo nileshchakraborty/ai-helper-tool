@@ -30,7 +30,7 @@ const buildServer = async () => {
     server.register(profileRoutes, { prefix: '/v1' });
     server.register(sessionRoutes, { prefix: '/v1' });
     server.register(aiRoutes, { prefix: '/v1' });
-    server.register(imageRoutes, { prefix: '/v1/ai' });
+    server.register(imageRoutes, { prefix: '/v1' });
 
     server.get('/health', async () => {
         return { status: 'ok' };

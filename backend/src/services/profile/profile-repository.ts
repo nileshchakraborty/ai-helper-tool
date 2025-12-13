@@ -52,6 +52,12 @@ export class ProfileRepository {
         return this.mapToProfile(user);
     }
 
+    async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
+        await this.db('users')
+            .where({ id: userId })
+            .update({ password_hash: passwordHash });
+    }
+
     async findByEmailForAuth(email: string): Promise<(UserProfile & { password_hash: string }) | null> {
         const user = await this.db('users').where({ email }).first();
         if (!user) return null;
