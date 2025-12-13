@@ -211,7 +211,26 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AuthResponse" }
 
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+        "401":
+          description: Invalid or expired token
+
   # --- Profile ---
+
   /profile:
     get:
       summary: Get user profile

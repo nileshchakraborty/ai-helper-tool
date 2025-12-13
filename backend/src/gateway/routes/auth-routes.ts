@@ -71,8 +71,25 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         const token = fastify.jwt.sign({ id: user.id, email: user.email });
         return { user: { id: user.id, email: user.email, fullName: user.fullName, preferences: user.preferences }, accessToken: token };
     });
+
+    // Refresh token endpoint - exchange valid token for new token
+    fastify.post('/auth/refresh', async (request, reply) => {
+        try {
+            // Verify the current token
+            await request.jwtVerify();
+            const decoded = request.user as { id: string; email: string };
+
+            // Issue a new token with fresh expiry
+            const newToken = fastify.jwt.sign({ id: decoded.id, email: decoded.email });
+
+            return { accessToken: newToken };
+        } catch (error) {
+            return reply.code(401).send({ message: 'Invalid or expired token' });
+        }
+    });
 };
 
 export default authRoutes;
+
 
 

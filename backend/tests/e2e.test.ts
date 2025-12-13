@@ -93,11 +93,11 @@ describe('E2E Tests', () => {
 
     describe('AI Flow - Coach Natural', () => {
         it('should accept coach natural request', async () => {
-            const res = await client.post('/v1/ai/coach/natural')
+            const res = await client.post('/v1/coach/natural')
                 .set('Authorization', `Bearer ${authToken}`)
                 .send({
-                    text: "Tell me about yourself",
-                    session_id: sessionId
+                    question: "Tell me about yourself",
+                    context: "Senior Engineer role"
                 });
 
             // Accept 200 (success) or 500 (LLM error if not configured)
@@ -194,7 +194,7 @@ describe('E2E Tests', () => {
 
     describe('Image Providers', () => {
         it('should return available providers', async () => {
-            const res = await client.get('/v1/ai/image/providers');
+            const res = await client.get('/v1/image/providers');
 
             expect(res.status).toBe(200);
             expect(res.body.providers).toBeDefined();
@@ -207,7 +207,7 @@ describe('E2E Tests', () => {
         });
 
         it('should accept diagram generation request', async () => {
-            const res = await client.post('/v1/ai/image/diagram')
+            const res = await client.post('/v1/image/diagram')
                 .send({
                     description: "Binary tree data structure",
                     style: "architecture",
@@ -219,7 +219,7 @@ describe('E2E Tests', () => {
         }, 120000);
 
         it('should require description for diagrams', async () => {
-            const res = await client.post('/v1/ai/image/diagram')
+            const res = await client.post('/v1/image/diagram')
                 .send({ style: "architecture" });
 
             expect(res.status).toBe(400);
