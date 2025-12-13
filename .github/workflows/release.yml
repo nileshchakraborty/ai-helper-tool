@@ -1,0 +1,120 @@
+name: Release
+
+on:
+    release:
+        types: [published]
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version tag (e.g., v1.0.0)"
+                required: true
+                type: string
+
+env:
+    NODE_VERSION: "20"
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+    # ============================================
+    # Build and Push Docker Image
+    # ============================================
+    docker-build:
+        name: Build Docker Image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Log in to Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=tag
+                      type=sha,prefix=
+                      type=raw,value=latest,enable={{is_default_branch}}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./backend
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+
+    # ============================================
+    # Create Release Artifacts
+    # ============================================
+    release-artifacts:
+        name: Create Release Artifacts
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+
+            - name: Install and Build Backend
+              working-directory: backend
+              run: |
+                  npm ci --legacy-peer-deps
+                  npm run build
+
+            - name: Create Backend Archive
+              run: |
+                  cd backend
+                  tar -czvf ../backend-release.tar.gz dist/ package.json package-lock.json
+
+            - name: Upload Release Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: backend-release
+                  path: backend-release.tar.gz
+                  retention-days: 30
+
+    # ============================================
+    # Mac Client Release Build
+    # ============================================
+    mac-release:
+        name: Mac Client Release
+        runs-on: macos-14
+        if: github.event_name == 'release'
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Xcode
+              uses: maxim-lobanov/setup-xcode@v1
+              with:
+                  xcode-version: latest-stable
+
+            - name: Build Release
+              working-directory: client-mac
+              run: |
+                  swift build --configuration release
+
+            - name: Package Mac App
+              working-directory: client-mac
+              run: |
+                  mkdir -p dist
+                  cp -r .build/release/MacInterviewCopilotApp dist/ || true
+                  tar -czvf ../mac-client-release.tar.gz dist/
+
+            - name: Upload Mac Release
+              uses: actions/upload-artifact@v4
+              with:
+                  name: mac-client-release
+                  path: mac-client-release.tar.gz
+                  retention-days: 30
