@@ -108,9 +108,21 @@ jobs:
             - name: Package Mac App
               working-directory: client-mac
               run: |
-                  mkdir -p dist
-                  cp -r .build/release/MacInterviewCopilotApp dist/ || true
-                  tar -czvf ../mac-client-release.tar.gz dist/
+                  APP_NAME="MacInterviewCopilot.app"
+                  mkdir -p "$APP_NAME/Contents/MacOS"
+                  mkdir -p "$APP_NAME/Contents/Resources"
+
+                  # Copy Binary
+                  cp .build/release/MacInterviewCopilotApp "$APP_NAME/Contents/MacOS/"
+
+                  # Copy Info.plist (Essential for Stealth Mode)
+                  cp MacInterviewCopilot/Info.plist "$APP_NAME/Contents/"
+
+                  # Ad-hoc sign
+                  codesign --force --deep --sign - "$APP_NAME"
+
+                  # Archive
+                  tar -czvf ../mac-client-release.tar.gz "$APP_NAME"
 
             - name: Upload Mac Release
               uses: actions/upload-artifact@v4

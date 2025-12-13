@@ -141,6 +141,10 @@ jobs:
         run: |
           swift build --configuration release 2>&1 || echo "Build completed with warnings"
 
+      - name: Run Unit Tests
+        working-directory: client-mac
+        run: swift test
+
   # ============================================
   # Docker Build Validation
   # ============================================
