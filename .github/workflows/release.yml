@@ -79,7 +79,7 @@ jobs:
                   tar -czvf ../backend-release.tar.gz dist/ package.json package-lock.json
 
             - name: Upload Release Artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: backend-release
                   path: backend-release.tar.gz
@@ -125,7 +125,7 @@ jobs:
                   tar -czvf ../mac-client-release.tar.gz "$APP_NAME"
 
             - name: Upload Mac Release
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: mac-client-release
                   path: mac-client-release.tar.gz

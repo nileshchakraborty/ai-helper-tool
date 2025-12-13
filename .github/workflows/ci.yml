@@ -68,7 +68,7 @@ jobs:
           tar -czvf ../backend-build.tar.gz dist/ package.json package-lock.json
 
       - name: Upload Backend Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backend-build
           path: backend-build.tar.gz
@@ -210,7 +210,7 @@ jobs:
           tar -czvf ../mac-client-build.tar.gz "$APP_NAME"
 
       - name: Upload Mac Client Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: mac-client-build
           path: mac-client-build.tar.gz
