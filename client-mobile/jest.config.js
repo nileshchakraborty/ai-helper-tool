@@ -1,10 +1,17 @@
 module.exports = {
-    preset: 'ts-jest',
-    testEnvironment: 'node',
+    preset: 'jest-expo',
     testMatch: ['**/__tests__/**/*.test.ts'],
-    moduleFileExtensions: ['ts', 'js', 'json'],
+    transform: {
+        '^.+\\.[jt]sx?$': 'babel-jest',
+    },
+    transformIgnorePatterns: [
+        'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)'
+    ],
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     collectCoverageFrom: [
-        '__tests__/**/*.ts',
-        '!**/*.d.ts'
+        'hooks/**/*.ts',
+        'components/**/*.tsx',
+        'app/**/*.tsx',
+        '!**/node_modules/**'
     ]
 };

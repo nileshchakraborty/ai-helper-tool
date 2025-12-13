@@ -1,64 +1,23 @@
 import { StyleSheet, TextInput, Button, View } from 'react-native';
 import { useState } from 'react';
-import { io, Socket } from 'socket.io-client';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Image } from 'expo-image';
+import { useSocket } from '@/hooks/use-socket';
 
 export default function HomeScreen() {
   const [ip, setIp] = useState('192.168.1.xxx');
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [status, setStatus] = useState('Disconnected');
-  const [currentStream, setCurrentStream] = useState('');
-
-  // Keep track of accumulated stream to handle appending correctly
-  // Using ref or functional state update is safer for streams
+  const { isConnected, status, currentStream, lastImage, connect, disconnect } = useSocket();
 
   const toggleConnection = () => {
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
-      setStatus('Disconnected');
-      return;
+    if (isConnected) {
+      disconnect();
+    } else {
+      const url = `http://${ip}:3000`;
+      connect(url);
     }
-
-    // Default port 3000
-    const url = `http://${ip}:3000`;
-    console.log(`Connecting to ${url}...`);
-    setStatus(`Connecting to ${url}...`);
-
-    const newSocket = io(url, {
-      transports: ['websocket'], // Force WebSocket
-    });
-
-    newSocket.on('connect', () => {
-      setStatus('Connected ✅');
-      setCurrentStream('Waiting for AI...');
-    });
-
-    newSocket.on('disconnect', () => {
-      setStatus('Disconnected ❌');
-      setSocket(null);
-    });
-
-    newSocket.on('connect_error', (err) => {
-      setStatus(`Error: ${err.message}`);
-    });
-
-    newSocket.on('ai:stream', (data: { text: string }) => {
-      setCurrentStream(prev => {
-        if (prev === 'Waiting for AI...') return data.text;
-        return prev + data.text;
-      });
-    });
-
-    newSocket.on('ai:stream:done', () => {
-      // Stream complete
-    });
-
-    setSocket(newSocket);
   };
 
   return (
@@ -89,7 +48,7 @@ export default function HomeScreen() {
             keyboardType="numeric"
           />
           <Button
-            title={socket ? "Disconnect" : "Connect"}
+            title={isConnected ? "Disconnect" : "Connect"}
             onPress={toggleConnection}
           />
         </View>
@@ -99,6 +58,13 @@ export default function HomeScreen() {
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Live AI Feed:</ThemedText>
         <ThemedView style={styles.responseBox}>
+          {lastImage ? (
+            <Image
+              source={{ uri: lastImage }}
+              style={{ width: '100%', height: 300, borderRadius: 8, marginBottom: 10 }}
+              contentFit="contain"
+            />
+          ) : null}
           <ThemedText style={{ fontSize: 18, lineHeight: 28 }}>
             {currentStream || "No active stream."}
           </ThemedText>
@@ -107,6 +73,7 @@ export default function HomeScreen() {
     </ParallaxScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   titleContainer: {

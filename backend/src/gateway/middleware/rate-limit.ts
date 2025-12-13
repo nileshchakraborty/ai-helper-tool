@@ -14,6 +14,9 @@ const AUTH_PATHS = ['/v1/auth/login', '/v1/auth/signup'];
 
 export const rateLimitMiddleware = fp(async (fastify, opts) => {
     fastify.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
+        // Skip rate limiting in test environment
+        if (process.env.NODE_ENV === 'test') return;
+
         const ip = request.ip;
         const path = request.url.split('?')[0]; // Remove query params
         const isAuthPath = AUTH_PATHS.includes(path);

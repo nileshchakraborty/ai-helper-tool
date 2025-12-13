@@ -1,65 +1,39 @@
-# 🗺️ Project Roadmap & Status
+# Mac Interview Copilot - Project Roadmap
 
-This document tracks the development progress of the Mac Interview Copilot.
-
-## 🟢 Current Status: v1.0 Release Candidate
-**Stability**: Stable / Beta
-**Latest Feature**: Stealth Mode & Auto-Capture Integration
-
----
+## 🚀 Mission
+A privacy-first, verified, and stealthy AI companion for technical interviews on macOS.
 
 ## ✅ Completed Milestones
 
-### **Phase 1: Foundation & AI Framework**
-- [x] **LangChain Integration**: Provider factory, chain templates, and unified model interface.
-- [x] **Backend API**: Fastify server with SSE streaming, Auth (JWT), and Rate Limiting.
-- [x] **Docker Infrastructure**: Postgres, Redis, and service orchestration.
+### Phase 1: Core Foundation
+- [x] **Monorepo Setup**: Backend (Node/Fastify), Mac Client (Swift), Infrastructure (Docker).
+- [x] **Stealth Mode**: `NSWindow` overlay, process hiding, memory-only screenshots.
+- [x] **AI Orchestration**: Integration with Ollama, OpenAI, Anthropic via LangChain/LangGraph.
+- [x] **MVP Features**: Chat interface, screenshot capture, behavioral coaching.
 
-### **Phase 2: RAG & Knowledge Graph**
-- [x] **ChromaDB Integration**: Vector store for document retrieval and context awareness.
-- [x] **Neo4j Integration**: Graph database for entity relationship mapping.
-- [x] **Hybrid Search**: Orchestrator combining vector search and graph traversal.
+### Phase 2: Feature Expansion
+- [x] **Mobile Companion**: React Native app for out-of-band updates (socket.io).
+- [x] **MLX Image Service**: Local, GPU-accelerated diagram generation (FLUX.1-schnell).
+- [x] **Knowledge Graph**: Personalized coaching based on weak areas (Neo4j).
 
-### **Phase 3: Mac Client & Stealth Features**
-- [x] **Native App**: SwiftUI-based macOS application with overlay window.
-- [x] **Stealth Mode**: Invisible screenshot capture (`LSUIElement`, `.screenSaver` level).
-- [x] **Screen Capture**: OCR pipeline with privacy-focused local processing.
-- [x] **Auto-Pilot**: Automatic 30s interval capture and analysis loop.
-- [x] **Secure Auth**: Keychain integration with JWT fallback.
+### Phase 3: DevOps & Quality
+- [x] **CI Pipeline**: GitHub Actions for backend/client test & build.
+- [x] **Automated Packaging**: Scripts to generate deployable artifacts.
+- [x] **Architecture Docs**: Updated diagrams including new services.
 
-### **Phase 4: CI/CD & DevEx (Recently Completed)**
-- [x] **Pipeline Hardening**: GitHub Actions with Mac unit tests and Docker validation.
-- [x] **Release Automation**: Automatic packaging of `.app` bundles and backend artifacts.
-- [x] **Artifact Downloads**: Direct download of build artifacts from CI runs.
+## 🚧 In Progress / Upcoming
 
----
+### Phase 4: Advanced Intelligence (Q1 2026)
+- [ ] **Audio Analysis**: Real-time transcription and "Live Assist" mode.
+- [ ] **Code Execution**: Sandboxed environment to run and verify generated code.
+- [ ] **Agentic Web Browsing**: Ability for AI to verify facts online.
 
-## 🚧 In Progress / Next Steps
+### Phase 5: Production Hardening
+- [ ] **Security Audit**: Penetration testing of local sockets and API.
+- [ ] **Performance Tuning**: Optimize OCR latency and MLX model loading.
+- [ ] **Installer**: `.dmg` creation for easy Mac distribution.
 
-### **Phase 5: Performance & Optimization**
-- [ ] **MLX On-Device Optimizations**: Further tune Flux.1 image generation for M1/M2 chips.
-- [ ] **Mobile App Polish**: Feature parity for React Native companion app.
-- [ ] **Latency Reduction**: Optimizing WebSocket event loop for real-time coaching.
-
-### **Phase 6: Advanced Features**
-- [ ] **Voice Mode**: Real-time bidirectional voice coaching (using Whisper + TTS).
-- [ ] **Cloud Sync**: Optional encrypted cloud backup for session history (currently local-only).
-- [ ] **Team Mode**: Multi-user shared context for mock interview practice.
-
----
-
-## 🛠 Feature Traceability
-
-| Feature | Backend | Mac Client | Status |
-|---------|:-------:|:----------:|:------:|
-| behavioral/answer | ✅ | ✅ | Live |
-| coding/assist | ✅ | ✅ | Live |
-| system-design | ✅ | ✅ | Live |
-| agent/chat | ✅ | ✅ | Live |
-| stealth-mode | N/A | ✅ | Live |
-| auto-capture | N/A | ✅ | Live |
-| image-gen (MLX) | ✅ | 🚧 | Beta |
-
----
-
-> *Last Updated: 2025-12-13*
+## 📊 Status Options
+- **Stable**: Core chat, Overlay, Behavioral Agent.
+- **Beta**: Coding Agent, Mobile Companion.
+- **Experimental**: System Design Agent, Knowledge Graph Personalization.

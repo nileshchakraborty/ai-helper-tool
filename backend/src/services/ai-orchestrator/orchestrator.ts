@@ -3,6 +3,7 @@ import { BEHAVIORAL_SYSTEM_PROMPT, CODING_SYSTEM_PROMPT, CASE_INTERVIEW_SYSTEM_P
 
 import { MCPClientService } from '../mcp/client';
 import { VectorService } from '../VectorService';
+import { getGraphDBService } from '../graph-db-service';
 import { SupervisorAgent, AgentType } from './agents/SupervisorAgent';
 import { broadcastToMobile } from '../../gateway/socket';
 
@@ -40,7 +41,23 @@ export class AIOrchestrator {
         }
     }
 
-    async streamBehavioralAnswer(question: string, context: string, providerId: string = 'openai') {
+    private async getPersonalizationContext(userId: string): Promise<string> {
+        if (!userId) return "";
+        try {
+            const graphDB = getGraphDBService();
+            const weakAreas = await graphDB.getWeakAreas(userId);
+
+            if (weakAreas.length === 0) return "";
+
+            const areaNames = weakAreas.map(w => w.type).join(", ");
+            return `\n\n**PERSONALIZATION**: The user has shown weakness in: ${areaNames}. Please provide extra detailed explanations for these topics.`;
+        } catch (err) {
+            console.warn('[AIOrchestrator] Failed to fetch graph context:', err);
+            return "";
+        }
+    }
+
+    async streamBehavioralAnswer(question: string, context: string, providerId: string = 'openai', userId?: string) {
         await this.ensureMcpConnected();
         const provider = this.router.getProvider(providerId);
 
@@ -53,7 +70,12 @@ export class AIOrchestrator {
             console.log(`[AIOrchestrator] Retrieved ${docs.length} chunks for context.`);
         }
 
-        const systemPrompt = BEHAVIORAL_SYSTEM_PROMPT.replace('{{context}}', context + ragContext);
+        // Graph Context
+        const personalizationContext = userId ? await this.getPersonalizationContext(userId) : "";
+
+        const systemPrompt = BEHAVIORAL_SYSTEM_PROMPT
+            .replace('{{context}}', context + ragContext)
+            .replace('{{personalizationContext}}', personalizationContext);
 
         let tools: any[] = [];
         try {
@@ -73,7 +95,7 @@ export class AIOrchestrator {
         return this.broadcastStream(stream);
     }
 
-    async streamCodingAssist(question: string, code: string, screenSnapshot: string, providerId: string = 'openai') {
+    async streamCodingAssist(question: string, code: string, screenSnapshot: string, providerId: string = 'openai', userId?: string) {
         await this.ensureMcpConnected();
         const provider = this.router.getProvider(providerId);
 
@@ -87,7 +109,12 @@ export class AIOrchestrator {
             console.log(`[AIOrchestrator] Retrieved ${docs.length} chunks for code.`);
         }
 
-        const systemPrompt = CODING_SYSTEM_PROMPT.replace('{{screenContext}}', (screenSnapshot ? 'Image attached.' : 'No screen context.') + ragContext);
+        // Graph Context
+        const personalizationContext = userId ? await this.getPersonalizationContext(userId) : "";
+
+        const systemPrompt = CODING_SYSTEM_PROMPT
+            .replace('{{screenContext}}', (screenSnapshot ? 'Image attached.' : 'No screen context.') + ragContext)
+            .replace('{{personalizationContext}}', personalizationContext);
 
         let tools: any[] = [];
         try {

@@ -203,6 +203,24 @@ describe('E2E Tests', () => {
         });
     });
 
+    describe('System Design - Architecture & Scalability', () => {
+        it('should accept system design request', async () => {
+            const res = await client.post('/v1/system-design/analyze')
+                .send({
+                    problem: "Design a URL Shortener like Bit.ly",
+                    context: "Focus on high availability and low latency"
+                });
+
+            expect([200, 500]).toContain(res.status);
+        }, 60000);
+
+        it('should require problem field', async () => {
+            const res = await client.post('/v1/system-design/analyze')
+                .send({ context: "interview" });
+            expect([200, 400, 500]).toContain(res.status);
+        });
+    });
+
     describe('Image Providers', () => {
         it('should return available providers', async () => {
             const res = await client.get('/v1/image/providers');

@@ -197,12 +197,12 @@ struct AuthContentView: View {
                                 // AI Response Display
                         if isAIThinking {
                             HStack {
-                                ProgressView()
-                                    .controlSize(.small)
+                                DotPulseView()
                                 Text("Thinking...")
                                     .font(.system(size: 12))
                                     .foregroundColor(.secondary)
                             }
+                            .transition(.opacity)
                             .padding(.bottom, 8)
                         } else if !aiResponseText.isEmpty {
                             VStack(alignment: .leading, spacing: 6) {
@@ -223,6 +223,7 @@ struct AuthContentView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.cyan.opacity(0.3), lineWidth: 1))
                             .padding(.horizontal, 16)
                             .padding(.bottom, 12)
+                            .transition(.scale(scale: 0.98).combined(with: .opacity))
                         }
                     }
                     
@@ -448,21 +449,4 @@ extension TranscriptionProvider {
     }
 }
 
-// Helper view to blur background if needed (kept for reference)
-struct VisualEffectView: NSViewRepresentable {
-    var material: NSVisualEffectView.Material
-    var blendingMode: NSVisualEffectView.BlendingMode
-    
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = material
-        view.blendingMode = blendingMode
-        view.state = .active
-        return view
-    }
-    
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.material = material
-        nsView.blendingMode = blendingMode
-    }
-}
+

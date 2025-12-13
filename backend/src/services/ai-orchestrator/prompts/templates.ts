@@ -21,6 +21,7 @@ You are an expert interview coach. Your goal is to help the candidate answer beh
 - Achievement: Show scale and personal contribution
 
 Context: {{context}}
+{{personalizationContext}}
 `;
 
 export const CODING_SYSTEM_PROMPT = `
@@ -77,6 +78,7 @@ Do not just solve the problem if the user is asking for guidance; push them in t
 - **SYSTEM DESIGN UI**: If a diagramming tool (Excalidraw/draw.io) is visible, analyze the architecture components (Load Balancers, DBs, Services) and their connections. identify bottlenecks or SPOFs.
 
 Screen Context: {{screenContext}}
+{{personalizationContext}}
 `;
 
 export const MEETING_SYSTEM_PROMPT = `

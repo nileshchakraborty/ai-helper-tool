@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { unifiedImageProvider } from "../../services/ai-orchestrator/providers/unified-image";
+import { broadcastToMobile } from "../../gateway/socket";
 
 export function registerImageTools(server: McpServer) {
     // Generate architecture/flow diagram
@@ -35,12 +36,20 @@ export function registerImageTools(server: McpServer) {
                 };
             }
 
+            // OUT-OF-BAND DELIVERY: Broadcast to client, don't return heavy base64 to LLM
+            if (result.imageBase64) {
+                broadcastToMobile('ai:image', {
+                    image: result.imageBase64,
+                    mimeType: result.mimeType || 'image/png',
+                    width: 1024,
+                    height: 768
+                });
+            }
+
             return {
                 content: [{
                     type: "text" as const,
-                    text: result.imageBase64
-                        ? Buffer.from(result.imageBase64, 'base64').toString('utf-8')
-                        : 'Diagram generated successfully'
+                    text: `Diagram generated and sent to user screen. Description: architecture diagram of ${description}.`
                 }]
             };
         }
@@ -72,12 +81,18 @@ export function registerImageTools(server: McpServer) {
                 };
             }
 
+            if (result.imageBase64) {
+                broadcastToMobile('ai:image', {
+                    image: result.imageBase64,
+                    mimeType: result.mimeType || 'image/png',
+                    title: title
+                });
+            }
+
             return {
                 content: [{
                     type: "text" as const,
-                    text: result.imageBase64
-                        ? Buffer.from(result.imageBase64, 'base64').toString('utf-8')
-                        : 'Flashcard generated successfully'
+                    text: `Flashcard for '${title}' (${framework}) generated and displayed.`
                 }]
             };
         }
@@ -105,12 +120,18 @@ export function registerImageTools(server: McpServer) {
                 };
             }
 
+            if (result.imageBase64) {
+                broadcastToMobile('ai:image', {
+                    image: result.imageBase64,
+                    mimeType: result.mimeType || 'image/png',
+                    caption: concept
+                });
+            }
+
             return {
                 content: [{
                     type: "text" as const,
-                    text: result.imageBase64
-                        ? Buffer.from(result.imageBase64, 'base64').toString('utf-8')
-                        : 'Visualization generated successfully'
+                    text: `Visualization of ${concept} generated and displayed.`
                 }]
             };
         }
@@ -136,12 +157,17 @@ export function registerImageTools(server: McpServer) {
                 };
             }
 
+            if (result.imageBase64) {
+                broadcastToMobile('ai:image', {
+                    image: result.imageBase64,
+                    mimeType: result.mimeType || 'image/png'
+                });
+            }
+
             return {
                 content: [{
                     type: "text" as const,
-                    text: result.imageBase64
-                        ? Buffer.from(result.imageBase64, 'base64').toString('utf-8')
-                        : 'Whiteboard cleaned up successfully'
+                    text: `Whiteboard sketch cleaned up and converted to professional diagram.`
                 }]
             };
         }

@@ -45,7 +45,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         let fullResponse = '';
 
         try {
-            const stream = await orchestrator.streamBehavioralAnswer(question, context, provider);
+            const stream = await orchestrator.streamBehavioralAnswer(question, context, provider, userId);
 
             for await (const chunk of stream) {
                 fullResponse += chunk;
@@ -94,7 +94,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         let fullResponse = '';
 
         try {
-            const stream = await orchestrator.streamCodingAssist(question, code, screenSnapshot, provider);
+            const stream = await orchestrator.streamCodingAssist(question, code, screenSnapshot, provider, userId);
 
             for await (const chunk of stream) {
                 fullResponse += chunk;

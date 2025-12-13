@@ -89,8 +89,11 @@ struct ChatView: View {
         .padding(.vertical, 8)
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(10)
+        .padding(.horizontal, 8)
+        .background(
+            VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
+                .cornerRadius(10)
+        )
         .padding(.horizontal, 8)
     }
     
@@ -164,6 +167,7 @@ struct ChatView: View {
             }
         }
         .padding(.vertical, 4)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
     
     @ViewBuilder
@@ -203,7 +207,14 @@ struct ChatView: View {
         .padding(14)
         .background(Color.white.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    LinearGradient(colors: [.white.opacity(0.2), .white.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Input Section
@@ -327,8 +338,8 @@ struct ChatView: View {
     @ViewBuilder
     private var sendButton: some View {
         if isStreaming {
-            ProgressView()
-                .scaleEffect(0.5)
+            DotPulseView()
+                .scaleEffect(0.8)
         } else {
             Button(action: { sendMessage() }) {
                 Image(systemName: "arrow.up.circle.fill")

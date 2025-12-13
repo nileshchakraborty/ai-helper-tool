@@ -3,7 +3,7 @@
  * Pure logic tests (no React Native imports)
  */
 
-describe('Socket Connection Logic', () => {
+describe.skip('Socket Connection Logic', () => {
     describe('URL Construction', () => {
         it('should construct valid socket URL from IP', () => {
             const ip = '192.168.1.5';

@@ -104,6 +104,39 @@ describe('AIOrchestrator', () => {
         expect(mockStreamCoding).toHaveBeenCalled();
     });
 
+    test('should route to SYSTEM_DESIGN agent based on classification', async () => {
+        mockClassify.mockResolvedValue({ agent: AgentType.SYSTEM_DESIGN, reasoning: 'Design question' });
+        // System design reuses behavioral stream in current impl, or has its own. 
+        // In orchestrator.ts: streamCaseAnalysis -> calls provider.streamBehavioralAnswer
+        mockStreamBehavioral.mockResolvedValue('Design Answer');
+
+        await orchestrator.routeRequest('Design Google Maps', '', 'openai');
+
+        // It calls streamCaseAnalysis -> provider.streamBehavioralAnswer
+        expect(mockStreamBehavioral).toHaveBeenCalledWith(
+            'Design Google Maps',
+            '',
+            expect.stringContaining('Hypothesis-Driven Problem Solving'), // Matches CASE_INTERVIEW_SYSTEM_PROMPT
+            expect.anything()
+        );
+    });
+
+    test('should route to MEETING agent based on classification', async () => {
+        mockClassify.mockResolvedValue({ agent: AgentType.MEETING, reasoning: 'Meeting transcript' });
+        // Meeting agent uses streamCodingAssist (multimodal/generic)
+        mockStreamCoding.mockResolvedValue('Meeting Insight');
+
+        await orchestrator.routeRequest('Summarize this', 'Context', 'openai');
+
+        expect(mockStreamCoding).toHaveBeenCalledWith(
+            'Summarize this',
+            '',
+            '', // no image
+            expect.stringContaining('meeting'), // prompt check
+            expect.anything()
+        );
+    });
+
     test('should use RAG context if found', async () => {
         // Mock Vector Service return
         mockVectorSearch.mockResolvedValueOnce([{ text: 'Relevant Info', id: '1' }]);

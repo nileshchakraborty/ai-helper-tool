@@ -19,10 +19,11 @@ public class OverlayWindow: NSWindow {
         self.backgroundColor = .clear
         self.title = "Panel" // Stealth: Generic title for WindowServer/Mission Control
         
-        // CRITICAL: Use screenSaver level to stay above fullscreen apps and video calls
-        // Window levels (low to high): normal < floating < modalPanel < statusBar < screenSaver
-        // .screenSaver ensures window stays above Zoom, Teams, Google Meet in fullscreen
-        self.level = .screenSaver
+        // CRITICAL: Use maximum window level to stay above ALMOST EVERYTHING including full screen apps
+        // Window levels (low to high): normal < floating < modalPanel < statusBar < screenSaver < maximum
+        // .maximum ensures window stays above Zoom, Teams, Google Meet, and native fullscreen apps
+        // Note: We cast to NSWindow.Level because CGWindowLevel key returns Int32/CGWindowLevel
+        self.level = NSWindow.Level(Int(CGWindowLevelForKey(.maximumWindow)))
         
         // Collection behavior for all spaces and fullscreen compatibility
         self.collectionBehavior = [
@@ -95,5 +96,16 @@ public class OverlayWindow: NSWindow {
     
     public override var canBecomeMain: Bool {
         return true
+    }
+    
+    // Force window level maintenance when ordering front
+    public override func orderFront(_ sender: Any?) {
+        self.level = NSWindow.Level(Int(CGWindowLevelForKey(.maximumWindow)))
+        super.orderFront(sender)
+    }
+    
+    public override func makeKeyAndOrderFront(_ sender: Any?) {
+        self.level = NSWindow.Level(Int(CGWindowLevelForKey(.maximumWindow)))
+        super.makeKeyAndOrderFront(sender)
     }
 }

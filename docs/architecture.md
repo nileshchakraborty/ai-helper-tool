@@ -16,8 +16,14 @@ graph TB
         Stream[StreamingClient]
     end
 
+    subgraph Mobile["Mobile Companion (React Native)"]
+        MobileUI[Home Screen / Image View]
+        SocketHook[useSocket Hook]
+    end
+
     subgraph Backend["Backend (Node.js/Fastify)"]
         Gateway[API Gateway]
+        SocketServer[Socket.IO Server]
         MCP[MCP Service Layer]
         subgraph Services
             Profile[ProfileService]
@@ -26,8 +32,7 @@ graph TB
         end
         subgraph Providers
             Ollama[OllamaProvider]
-            OpenAI[OpenAIProvider]
-            Anthropic[AnthropicProvider]
+            UnifiedImage[UnifiedImageProvider]
         end
     end
 
@@ -35,6 +40,7 @@ graph TB
         Postgres[(PostgreSQL)]
         Redis[(Redis)]
         OllamaServer[Ollama Server]
+        MLXServer[MLX Image Service (Python)]
     end
 
     UI --> Stream
@@ -43,11 +49,16 @@ graph TB
     OCR --> UI
     Stream -->|HTTP/SSE| Gateway
     Gateway --> MCP
+    Gateway --> SocketServer
     MCP --> Services
     AI --> Providers
     Providers --> OllamaServer
+    UnifiedImage -->|HTTP| MLXServer
     Profile --> Postgres
     Session --> Redis
+    
+    SocketServer -->|WebSocket (Stream/Images)| SocketHook
+    SocketHook --> MobileUI
 ```
 
 ## Component Details
@@ -253,18 +264,20 @@ The following modules are available but not part of the core Mac + Backend deplo
 
 | Aspect | Details |
 |--------|---------|
-| **Purpose** | React Native app for viewing AI responses on phone |
-| **Connection** | Socket.IO WebSocket to backend |
-| **Status** | Prototype, optional |
+| **Purpose** | React Native app for viewing AI responses and generated diagrams on phone |
+| **Connection** | Socket.IO WebSocket to backend (auto-reconnecting) |
+| **Status** | Production-ready, hardened hook implementation |
+| **Features** | Real-time text streaming, Out-of-band image display (base64) |
 | **Requirements** | Expo Go on phone, same WiFi network |
 
 ### MLX Image Service (`mlx-image-service/`)
 
 | Aspect | Details |
 |--------|---------|
-| **Purpose** | Local image generation using Apple MLX |
+| **Purpose** | Local image generation using Apple MLX (FLUX.1-schnell model) |
 | **Endpoints** | Diagrams, flashcards, visualizations |
-| **Status** | Optional, GPU-accelerated on Apple Silicon |
+| **Status** | Integrated, GPU-accelerated on Apple Silicon |
+| **Delivery** | Images broadcast via WebSocket to Mobile Companion (bypassing LLM context) |
 | **Fallback** | Gemini API if MLX unavailable |
 
 These modules can be enabled via:
