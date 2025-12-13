@@ -88,9 +88,11 @@ public class StreamingClient {
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                     request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
                     
-                    // Add auth token if available
+                    // Add auth token (Keychain or Config Fallback)
                     if let token = KeychainService.shared.getAccessToken() {
                         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                    } else if let configToken = AppConfiguration.shared.authToken {
+                        request.setValue("Bearer \(configToken)", forHTTPHeaderField: "Authorization")
                     }
                     
                     request.httpBody = try JSONSerialization.data(withJSONObject: body)

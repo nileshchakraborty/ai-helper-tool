@@ -17,12 +17,25 @@ public class OverlayWindow: NSWindow {
         // Window behavior
         self.isOpaque = false
         self.backgroundColor = .clear
-        self.level = .floating
-        self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        self.title = "Panel" // Stealth: Generic title for WindowServer/Mission Control
+        
+        // CRITICAL: Use screenSaver level to stay above fullscreen apps and video calls
+        // Window levels (low to high): normal < floating < modalPanel < statusBar < screenSaver
+        // .screenSaver ensures window stays above Zoom, Teams, Google Meet in fullscreen
+        self.level = .screenSaver
+        
+        // Collection behavior for all spaces and fullscreen compatibility
+        self.collectionBehavior = [
+            .canJoinAllSpaces,        // Visible on all desktops
+            .fullScreenAuxiliary,      // Works alongside fullscreen apps
+            .stationary,               // Doesn't move with workspace animations
+            .ignoresCycle              // Cmd+Tab won't switch to this window
+        ]
+        
         // Visual styling
-        self.backgroundColor = .clear // Clear for VisualEffectView
+        self.backgroundColor = .clear
         self.hasShadow = true
-        self.isOpaque = false // Allow transparency
+        self.isOpaque = false
         
         // CRITICAL: Exclude from screen sharing, Zoom, and proctoring tools
         // .none = window NOT captured by:
@@ -33,8 +46,12 @@ public class OverlayWindow: NSWindow {
         self.sharingType = .none
         
         // Additional stealth settings
-        self.hidesOnDeactivate = false
-        self.animationBehavior = .none
+        self.hidesOnDeactivate = false  // Stay visible when app loses focus
+        self.animationBehavior = .none   // No animation effects
+        self.isMovableByWindowBackground = true  // Easy dragging
+        
+        // Prevent window from being minimized or hidden during calls
+        self.canHide = false
     }
     
     // Toggle click-through mode (Cmd+Shift+T)

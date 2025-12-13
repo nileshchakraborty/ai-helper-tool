@@ -16,6 +16,7 @@ import { initSocket } from './socket';
 const buildServer = async () => {
     const server = Fastify({
         logger: env.NODE_ENV === 'development',
+        bodyLimit: 52428800, // 50MB for image uploads
     });
 
     server.register(cors);

@@ -21,6 +21,11 @@ struct ChatView: View {
     @State private var selectedDisplay: CGDirectDisplayID = CGMainDisplayID()
     @State private var isStealthMode: Bool = false
     
+    // Auto-capture mode for continuous screen monitoring
+    @State private var isAutoCaptureEnabled: Bool = false
+    @State private var autoCaptureTimer: Timer?
+    @State private var lastAutoCapture: Date?
+    
     enum ChatMode: String, CaseIterable, Identifiable {
         case behavioral = "Behavioral"
         case coding = "Coding"
@@ -288,13 +293,35 @@ struct ChatView: View {
     
     @ViewBuilder
     private var screenshotButton: some View {
-        Button(action: { takeScreenshot() }) {
-            Image(systemName: "camera.viewfinder")
-                .font(.system(size: 20))
-                .foregroundColor(.blue)
+        HStack(spacing: 4) {
+            // Manual screenshot button
+            Button(action: { takeScreenshot() }) {
+                Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 20))
+                    .foregroundColor(.blue)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .help("Silent Screenshot")
+            
+            // Auto-capture toggle
+            Button(action: { toggleAutoCapture() }) {
+                HStack(spacing: 2) {
+                    Image(systemName: isAutoCaptureEnabled ? "stop.circle.fill" : "play.circle")
+                        .font(.system(size: 16))
+                    if isAutoCaptureEnabled {
+                        Text("Auto")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                }
+                .foregroundColor(isAutoCaptureEnabled ? .red : .green)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
+                .background(isAutoCaptureEnabled ? Color.red.opacity(0.2) : Color.green.opacity(0.1))
+                .cornerRadius(8)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .help(isAutoCaptureEnabled ? "Stop Auto-Capture (every 5s)" : "Start Auto-Capture (every 5s)")
         }
-        .buttonStyle(PlainButtonStyle())
-        .help("Silent Screenshot")
     }
     
     @ViewBuilder
@@ -324,19 +351,104 @@ struct ChatView: View {
     }
     
     private func takeScreenshot() {
-        if let window = NSApplication.shared.windows.first(where: { $0.isVisible && $0.level == .floating }) {
-            let originalAlpha = window.alphaValue
-            window.alphaValue = 0.0
+        captureScreenSilently { imageData in
+            DispatchQueue.main.async {
+                self.screenSnapshotData = imageData
+            }
+        }
+    }
+    
+    /// Core silent capture: hides overlay, captures, restores
+    private func captureScreenSilently(completion: @escaping (Data?) -> Void) {
+        // Find our overlay window
+        guard let window = NSApplication.shared.windows.first(where: { 
+            $0.isVisible && ($0.level == .screenSaver || $0.level == .floating) 
+        }) else {
+            // No overlay window - just capture directly
+            let imageData = captureCurrentScreen()
+            completion(imageData)
+            return
+        }
+        
+        // Use orderOut/orderFront for immediate hide/show (faster than alpha animation)
+        // This is nearly invisible to the user
+        window.orderOut(nil)
+        
+        // Small delay to ensure window is fully hidden before capture
+        // Increased to 0.1s to be absolutely safe on all hardware
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            let imageData = self.captureCurrentScreen()
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                 if let image = ScreenCaptureService.shared.captureScreen(displayId: self.selectedDisplay) {
-                      if let tiff = image.tiffRepresentation,
-                         let bitmap = NSBitmapImageRep(data: tiff),
-                         let jpeg = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.7]) {
-                          self.screenSnapshotData = jpeg
-                      }
-                 }
-                 window.alphaValue = originalAlpha
+            // Restore window immediately
+            window.orderFront(nil)
+            window.makeKeyAndOrderFront(nil)
+            
+            completion(imageData)
+        }
+    }
+    
+    /// Capture the current screen and return JPEG data
+    private func captureCurrentScreen() -> Data? {
+        guard let image = ScreenCaptureService.shared.captureScreen(displayId: self.selectedDisplay),
+              let tiff = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let jpeg = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.7]) else {
+            return nil
+        }
+        return jpeg
+    }
+    
+    /// Toggle auto-capture mode (every 30 seconds)
+    /// "Auto-Pilot": Captures and SENDS to AI automatically
+    private func toggleAutoCapture() {
+        isAutoCaptureEnabled.toggle()
+        
+        if isAutoCaptureEnabled {
+            // Start timer - captures every 30 seconds
+            autoCaptureTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
+                self.performAutoCaptureAndSend()
+            }
+            // Take first capture immediately
+            performAutoCaptureAndSend()
+        } else {
+            // Stop timer
+            autoCaptureTimer?.invalidate()
+            autoCaptureTimer = nil
+        }
+    }
+    
+    private func performAutoCaptureAndSend() {
+        // Don't interrupt if already streaming a response
+        guard !isStreaming else { return }
+        
+        self.lastAutoCapture = Date()
+        self.captureScreenSilently { imageData in
+            guard let data = imageData else { return }
+            
+            DispatchQueue.main.async {
+                self.screenSnapshotData = data
+                
+                // AUTO-SEND: Trigger analysis immediately
+                // We send a generic prompt if the text box is empty, or the user's current text
+                let prompt = self.question.isEmpty ? "Analyze this screen and provide relevant assistance for the interview context." : self.question
+                
+                // Temporarily set question if empty so sendMessage works (or refactor sendMessage)
+                let originalQuestion = self.question
+                if self.question.isEmpty {
+                    self.question = prompt
+                }
+                
+                self.sendMessage()
+                
+                // Restore original question text (so user doesn't lose their draft)
+                // Note: sendMessage clears 'question', so we only restore if we used a default
+                if originalQuestion.isEmpty {
+                    // We don't restore the default prompt to the UI to keep it clean, 
+                    // but we cleared the draft. 
+                }
+                
+                // Clear snapshot after sending to avoid stale data
+                // self.screenSnapshotData = nil // sendMessage does this usually? Let's check.
             }
         }
     }

@@ -29,8 +29,7 @@ let package = Package(
             path: "MacInterviewCopilot",
             exclude: [
                 "Runner",
-                "Core/Networking/OpenAPIClient",
-                "Info.plist"
+                "Core/Networking/OpenAPIClient"
             ],
             resources: [
                 .process("Resources")

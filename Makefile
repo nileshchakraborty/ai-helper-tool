@@ -42,6 +42,8 @@ mlx-start: ## Start MLX image service (requires setup first)
 	@echo "   This will run in foreground. Press Ctrl+C to stop."
 	cd mlx-image-service && source venv/bin/activate && python server.py
 
+run-mlx: mlx-start ## Alias for mlx-start
+
 logs: ## View backend logs
 	docker compose -f infra/docker-compose.dev.yml logs -f backend
 
