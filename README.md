@@ -47,6 +47,7 @@ make run-mac
 
 - 📖 [**RUNBOOK.md**](./RUNBOOK.md) - Complete setup, usage, and troubleshooting guide
 - 🏗️ [**Architecture**](./docs/architecture.md) - System design and components
+- 🗺️ [**Roadmap & Status**](./ROADMAP.md) - Project tracking and milestones
 - 🔌 [**API Reference**](./rest.http) - Test all API endpoints (VS Code REST Client)
 
 ## Architecture Overview

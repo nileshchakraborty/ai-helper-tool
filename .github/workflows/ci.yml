@@ -63,6 +63,7 @@ jobs:
           NODE_ENV: test
 
       - name: Package Backend
+        working-directory: .
         run: |
           tar -czvf backend-build.tar.gz backend/dist/ backend/package.json backend/package-lock.json
 
