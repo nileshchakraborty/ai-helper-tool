@@ -37,7 +37,7 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "MacInterviewCopilotApp", // Keep binary name
+            name: "MacInterviewCopilotApp",
             dependencies: ["MacInterviewCopilotLib"],
             path: "MacInterviewCopilot/Runner"
         ),

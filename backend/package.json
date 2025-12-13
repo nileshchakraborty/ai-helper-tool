@@ -18,6 +18,7 @@
   "type": "commonjs",
   "dependencies": {
     "@ai-sdk/google": "^2.0.46",
+    "bcryptjs": "^2.4.3",
     "@anthropic-ai/sdk": "^0.71.2",
     "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.0.0",
@@ -37,6 +38,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.0",
     "@types/pdf-parse": "^1.1.5",
