@@ -172,3 +172,31 @@ ai-manager/
 ├── RUNBOOK.md               # Complete usage guide
 └── rest.http                # API test requests
 ```
+
+---
+
+## Phase 2 Modules (Optional)
+
+The following modules are available but not part of the core Mac + Backend deployment:
+
+### Mobile Companion (`client-mobile/`)
+
+| Aspect | Details |
+|--------|---------|
+| **Purpose** | React Native app for viewing AI responses on phone |
+| **Connection** | Socket.IO WebSocket to backend |
+| **Status** | Prototype, optional |
+| **Requirements** | Expo Go on phone, same WiFi network |
+
+### MLX Image Service (`mlx-image-service/`)
+
+| Aspect | Details |
+|--------|---------|
+| **Purpose** | Local image generation using Apple MLX |
+| **Endpoints** | Diagrams, flashcards, visualizations |
+| **Status** | Optional, GPU-accelerated on Apple Silicon |
+| **Fallback** | Gemini API if MLX unavailable |
+
+These modules can be enabled via:
+- `make run-mobile` - Start mobile companion
+- `make mlx-setup && make mlx-start` - Start MLX image server

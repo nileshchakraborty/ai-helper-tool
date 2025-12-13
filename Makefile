@@ -82,8 +82,13 @@ test-mac: ## Run Mac client tests
 
 # ==================== Utilities ====================
 
-lint:
+lint: ## Lint backend code
 	cd backend && npm run lint
+
+openapi-validate: ## Validate OpenAPI spec
+	@./scripts/openapi-validate.sh
+
+ci: lint openapi-validate test ## Run CI checks (lint, openapi, tests)
 
 clean:
 	rm -rf backend/node_modules
@@ -125,11 +130,10 @@ run-mobile: ## Run Mobile companion (Expo)
 	cd client-mobile && npx expo start
 
 providers: ## Check image provider status
-	@curl -s http://localhost:3000/v1/ai/image/providers | jq .
+	@curl -s http://localhost:3000/v1/image/providers | jq .
 
 health: ## Check backend health
 	@curl -s http://localhost:3000/health | jq .
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
