@@ -59,7 +59,30 @@ services:
     volumes:
       - redis_data:/data
 
+  # Vector Store for RAG
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+
+  # Knowledge Graph for relationships
+  neo4j:
+    image: neo4j:5-community
+    ports:
+      - "7474:7474" # Browser UI
+      - "7687:7687" # Bolt protocol
+    environment:
+      - NEO4J_AUTH=neo4j/interview123
+    volumes:
+      - neo4j_data:/data
+
 volumes:
   postgres_data:
   redis_data:
   ollama_data:
+  chroma_data:
+  neo4j_data:

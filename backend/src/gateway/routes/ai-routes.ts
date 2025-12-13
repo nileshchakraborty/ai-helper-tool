@@ -1,3 +1,4 @@
+/// <reference path="../../types/fastify-jwt.d.ts" />
 import { FastifyInstance } from 'fastify';
 import { AIOrchestrator } from '../../services/ai-orchestrator/orchestrator';
 import { MCPClientService } from '../../services/mcp/client';

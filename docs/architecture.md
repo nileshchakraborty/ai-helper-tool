@@ -131,7 +131,77 @@ OLLAMA_API_KEY=           # Optional, for remote Ollama
 
 OPENAI_API_KEY=sk-...     # Optional
 ANTHROPIC_API_KEY=sk-...  # Optional
+
+# AI Framework Feature Flags (NEW)
+USE_LANGGRAPH=true        # Enable multi-agent orchestration
+USE_CHROMADB=true         # Enable RAG with interview examples
+USE_NEO4J=true            # Enable user progress tracking
+
+# Data Services
+CHROMA_URL=http://localhost:8000
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=interview123
 ```
+
+## AI Framework Integration
+
+The backend uses modern AI orchestration frameworks for enhanced capabilities:
+
+```mermaid
+graph TB
+    subgraph LangGraph["LangGraph Orchestrator"]
+        Supervisor[Supervisor Node]
+        Coding[Coding Agent]
+        Behavioral[Behavioral Agent]
+        SystemDesign[System Design Agent]
+        Meeting[Meeting Agent]
+        Chat[Chat Agent]
+    end
+    
+    subgraph DataServices["Data Services"]
+        ChromaDB[(ChromaDB\nVector Store)]
+        Neo4j[(Neo4j\nKnowledge Graph)]
+    end
+    
+    Request[User Request] --> Supervisor
+    Supervisor -->|classify| Coding
+    Supervisor -->|classify| Behavioral
+    Supervisor -->|classify| SystemDesign
+    Supervisor -->|classify| Meeting
+    Supervisor -->|classify| Chat
+    
+    Coding --> ChromaDB
+    Behavioral --> ChromaDB
+    SystemDesign --> Neo4j
+```
+
+### LangChain + LangGraph
+
+| Component | Purpose |
+|-----------|---------|
+| **LLM Providers** | Unified factory for Ollama, OpenAI, Anthropic |
+| **Chain Templates** | Pre-built chains for behavioral, coding, case interviews |
+| **Supervisor Node** | Classifies requests into agent types |
+| **Specialized Agents** | CODING, BEHAVIORAL, SYSTEM_DESIGN, MEETING, CHAT |
+
+### ChromaDB (Vector Store)
+
+| Collection | Content |
+|------------|---------|
+| `interview_questions` | Behavioral Q&A with STAR format examples |
+| `coding_patterns` | LeetCode patterns (Two Sum, Sliding Window, etc.) |
+| `user_sessions` | Historical session context |
+| `company_guides` | Company-specific interview tips |
+
+### Neo4j (Knowledge Graph)
+
+| Capability | Description |
+|------------|-------------|
+| **Practice Tracking** | Records user performance on question types |
+| **Weak Area Detection** | Identifies topics needing more practice |
+| **Concept Relationships** | Maps related interview concepts |
+| **Progress Summary** | Aggregates user's interview journey |
 
 ## Security
 

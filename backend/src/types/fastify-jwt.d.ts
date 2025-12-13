@@ -8,4 +8,12 @@ declare module 'fastify' {
             decode(token: string, options?: any): any;
         }
     }
+
+    interface FastifyRequest {
+        user?: {
+            id: string;
+            email?: string;
+            role?: string;
+        }
+    }
 }

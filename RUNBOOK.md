@@ -125,6 +125,42 @@ This starts:
 - **redis** - Redis cache (port 6379)
 - **ollama** - Local AI server (port 11434)
 
+### AI Framework Services (Optional)
+
+Enable advanced AI features with vector search and knowledge graph:
+
+```bash
+# Start ChromaDB and Neo4j
+docker compose -f infra/docker-compose.dev.yml up chromadb neo4j -d
+```
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| **ChromaDB** | 8000 | Vector store for RAG (interview examples) |
+| **Neo4j** | 7474 (UI), 7687 (Bolt) | Knowledge graph for progress tracking |
+
+**Access Neo4j Browser:** http://localhost:7474  
+**Credentials:** neo4j / interview123
+
+**Seed Interview Data:**
+```bash
+cd backend && npx ts-node scripts/seed-interview-questions.ts
+```
+
+**Enable Features in `backend/.env`:**
+```bash
+# AI Framework Feature Flags
+USE_LANGGRAPH=true    # Multi-agent orchestration
+USE_CHROMADB=true     # RAG with interview examples
+USE_NEO4J=true        # User progress tracking
+
+# Data Service URLs
+CHROMA_URL=http://localhost:8000
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=interview123
+```
+
 ### Useful Commands
 
 ```bash

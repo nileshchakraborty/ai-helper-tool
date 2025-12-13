@@ -16,6 +16,17 @@ const envSchema = z.object({
     OLLAMA_MODEL: z.string().default('llama3.2'),
     OLLAMA_API_KEY: z.string().optional(),
     JWT_SECRET: z.string().default('supersecret_dev_key_change_in_prod'),
+
+    // Feature Flags
+    USE_LANGGRAPH: z.string().default('false').transform(v => v === 'true'),
+    USE_CHROMADB: z.string().default('false').transform(v => v === 'true'),
+    USE_NEO4J: z.string().default('false').transform(v => v === 'true'),
+
+    // Data Services
+    CHROMA_URL: z.string().default('http://localhost:8000'),
+    NEO4J_URI: z.string().default('bolt://localhost:7687'),
+    NEO4J_USER: z.string().default('neo4j'),
+    NEO4J_PASSWORD: z.string().default('interview123'),
 });
 
 export const env = envSchema.parse(process.env);

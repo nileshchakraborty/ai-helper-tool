@@ -259,3 +259,129 @@ Accept: text/event-stream
   "context": "Standard interview question",
   "provider": "ollama"
 }
+
+### ===========================================
+### System Design Interviews (NEW)
+### ===========================================
+
+### System Design - URL Shortener
+POST {{baseUrl}}/v1/system-design/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "problem": "Design a URL shortener like bit.ly",
+  "context": "Meta/Google system design interview. Focus on scalability and reliability.",
+  "provider": "ollama"
+}
+
+### System Design - Chat System
+POST {{baseUrl}}/v1/system-design/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "problem": "Design a real-time chat system like Slack",
+  "context": "Senior SWE interview. Cover WebSockets, message delivery guarantees, scaling.",
+  "provider": "ollama"
+}
+
+### System Design - Rate Limiter
+POST {{baseUrl}}/v1/system-design/analyze
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "problem": "Design a rate limiter for an API",
+  "context": "Amazon interview. Discuss token bucket, sliding window algorithms.",
+  "provider": "ollama"
+}
+
+### ===========================================
+### Agent Chat (LangGraph Multi-Agent - NEW)
+### ===========================================
+
+### Agent Chat - Auto-route to correct agent
+# Supervisor automatically routes to: CODING | BEHAVIORAL | SYSTEM_DESIGN | MEETING | CHAT
+POST {{baseUrl}}/v1/agent/chat
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "message": "How do I implement a binary search tree?",
+  "context": "Coding interview prep",
+  "provider": "ollama"
+}
+
+### Agent Chat - Behavioral routing
+POST {{baseUrl}}/v1/agent/chat
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "message": "Tell me about a time you led a team through a difficult challenge",
+  "context": "Behavioral interview prep",
+  "provider": "ollama"
+}
+
+### Agent Chat - System Design routing
+POST {{baseUrl}}/v1/agent/chat
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "message": "How would you design Instagram's feed?",
+  "context": "System design interview prep",
+  "provider": "ollama"
+}
+
+### ===========================================
+### Auth Token Refresh (NEW)
+### ===========================================
+
+### Refresh Token
+POST {{baseUrl}}/v1/auth/refresh
+Authorization: Bearer {{token}}
+
+### ===========================================
+### Image Generation Endpoints
+### ===========================================
+
+### Get Available Image Providers
+GET {{baseUrl}}/v1/image/providers
+
+### Generate Diagram
+POST {{baseUrl}}/v1/image/diagram
+Content-Type: application/json
+
+{
+  "description": "System architecture diagram for a microservices e-commerce platform",
+  "style": "technical"
+}
+
+### Generate Flashcard Image
+POST {{baseUrl}}/v1/image/flashcard
+Content-Type: application/json
+
+{
+  "topic": "Binary Search Tree operations",
+  "style": "educational"
+}
+
+### ===========================================
+### Quick Verification Tests
+### ===========================================
+
+### Test Ollama Connection
+GET http://localhost:11434/api/version
+
+### List Ollama Models
+GET http://localhost:11434/api/tags
+
+### Test ChromaDB Connection
+GET http://localhost:8000/api/v2/heartbeat
+
+### Test Neo4j Connection (Browser)
+# Open http://localhost:7474 in browser
+# Username: neo4j
+# Password: interview123
