@@ -1,7 +1,7 @@
 import { StyleSheet, TextInput, Button, View } from 'react-native';
 import { useState } from 'react';
 
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import ParallaxScrollView from '../../components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Image } from 'expo-image';
@@ -52,7 +52,7 @@ export default function HomeScreen() {
             onPress={toggleConnection}
           />
         </View>
-        <ThemedText>Enter your Mac's Local IP (e.g. 192.168.1.5)</ThemedText>
+        <ThemedText>Enter your Mac&apos;s Local IP (e.g. 192.168.1.5)</ThemedText>
       </ThemedView>
 
       <ThemedView style={styles.stepContainer}>
