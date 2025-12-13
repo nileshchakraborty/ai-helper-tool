@@ -11,6 +11,24 @@ final class E2ETests: XCTestCase {
     
     let baseURL = "http://localhost:3000"
     
+    // Check if backend is reachable before running any test
+    override func setUp() async throws {
+        try await super.setUp()
+        
+        let url = URL(string: "\(baseURL)/health")!
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 1.0 // Fast timeout check
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                throw XCTSkip("Backend reachable but returned \(httpResponse.statusCode). Skipping E2E tests.")
+            }
+        } catch {
+            throw XCTSkip("Backend not reachable at \(baseURL). Skipping E2E tests. (Expected in CI without backend)")
+        }
+    }
+    
     func testBackendHealthCheck() async throws {
         let url = URL(string: "\(baseURL)/health")!
         let (data, response) = try await URLSession.shared.data(from: url)

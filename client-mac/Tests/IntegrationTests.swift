@@ -24,8 +24,7 @@ class IntegrationTests: XCTestCase {
             XCTAssertTrue(receivedText || true, "Stream completed or errored gracefully")
         } catch {
             // In CI/Test environment without backend, this is expected
-            print("Received expected error (backend not running or no keys): \(error)")
-            // We still pass the test - the goal is to verify code compiles and runs
+            throw XCTSkip("Backend not running or no keys (Error: \(error)). Skipping integration test.")
         }
     }
 }
