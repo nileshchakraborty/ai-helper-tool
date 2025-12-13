@@ -6,6 +6,7 @@
 # - Backend: Native Node.js (Performance)
 # - Ollama: Native (GPU Access)
 # - MLX: Native (GPU Access)
+# - Mobile Companion: React Native (Socket.IO)
 
 set -e
 
@@ -104,6 +105,12 @@ echo "   Backend:  http://localhost:3000"
 curl -s http://localhost:3000/health > /dev/null && echo "   Health:   OK"
 curl -s http://localhost:8000/api/v2/heartbeat > /dev/null 2>&1 && echo "   ChromaDB: Available"
 curl -s http://localhost:7474 > /dev/null 2>&1 && echo "   Neo4j:    Available"
+
+# Step 5b: Mobile Companion Info
+echo ""
+echo "📱 To start Mobile Companion:"
+echo "   Run 'make run-mobile' in a new terminal window"
+echo "   (Requires Expo Go app on your phone)"
 
 # Step 6: Launch Client
 echo ""

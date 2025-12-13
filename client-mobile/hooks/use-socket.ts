@@ -97,7 +97,7 @@ export function useSocket(): UseSocketReturn {
                 socket.disconnect();
             }
         };
-    }, []);
+    }, [socket]);
 
     return {
         socket,

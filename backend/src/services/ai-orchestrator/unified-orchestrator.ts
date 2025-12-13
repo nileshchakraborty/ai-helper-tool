@@ -6,6 +6,7 @@ import { env } from '../../config/env';
 import { AIOrchestrator } from './orchestrator';
 import { routeWithGraph, streamWithGraph, AgentType } from './langgraph';
 import { getChromaService } from '../chroma-service';
+import { ResponseValidator } from './validation/response-validator';
 
 // Singleton instances
 let legacyOrchestrator: AIOrchestrator | null = null;
@@ -63,8 +64,15 @@ export async function routeRequest(
 
     // Collect stream into string for non-streaming endpoint
     let result = '';
+    const validator = new ResponseValidator();
     const stream = await orchestrator.routeRequest(message, context, providerId);
     for await (const chunk of stream) {
+        const validation = validator.validateChunk(chunk);
+        if (!validation.isValid) {
+            console.warn(`[UnifiedOrchestrator] Validation failed: ${validation.reason}`);
+            result += `\n[System Alert: AI Output Halted - ${validation.reason}]`;
+            break;
+        }
         result += chunk;
     }
     return result;
@@ -80,14 +88,25 @@ export async function* streamBehavioral(
 ): AsyncGenerator<string, void, unknown> {
     const enhancedQuestion = await enhanceWithRAG(question, 'behavioral');
 
+    const validator = new ResponseValidator();
     if (env.USE_LANGGRAPH) {
         for await (const chunk of streamWithGraph(enhancedQuestion, context, providerId as 'ollama')) {
+            const validation = validator.validateChunk(chunk);
+            if (!validation.isValid) {
+                yield `\n[System Alert: AI Output Halted - ${validation.reason}]`;
+                break;
+            }
             yield chunk;
         }
     } else {
         const orchestrator = getOrchestrator();
         const stream = await orchestrator.streamBehavioralAnswer(enhancedQuestion, context, providerId);
         for await (const chunk of stream) {
+            const validation = validator.validateChunk(chunk);
+            if (!validation.isValid) {
+                yield `\n[System Alert: AI Output Halted - ${validation.reason}]`;
+                break;
+            }
             yield chunk;
         }
     }
@@ -104,15 +123,26 @@ export async function* streamCoding(
 ): AsyncGenerator<string, void, unknown> {
     const enhancedQuestion = await enhanceWithRAG(question, 'coding');
 
+    const validator = new ResponseValidator();
     if (env.USE_LANGGRAPH) {
         const fullContext = code ? `Code:\n${code}\n\nContext: ${screenContext}` : screenContext;
         for await (const chunk of streamWithGraph(enhancedQuestion, fullContext, providerId as 'ollama')) {
+            const validation = validator.validateChunk(chunk);
+            if (!validation.isValid) {
+                yield `\n[System Alert: AI Output Halted - ${validation.reason}]`;
+                break;
+            }
             yield chunk;
         }
     } else {
         const orchestrator = getOrchestrator();
         const stream = await orchestrator.streamCodingAssist(enhancedQuestion, code, screenContext, providerId);
         for await (const chunk of stream) {
+            const validation = validator.validateChunk(chunk);
+            if (!validation.isValid) {
+                yield `\n[System Alert: AI Output Halted - ${validation.reason}]`;
+                break;
+            }
             yield chunk;
         }
     }

@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 // Mock socket.io-client
 jest.mock('socket.io-client');
 
-describe.skip('useSocket Hook', () => {
+describe('useSocket Hook', () => {
     let mockSocket: any;
 
     beforeEach(() => {
