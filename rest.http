@@ -16,7 +16,7 @@ GET {{baseUrl}}/health
 ### ===========================================
 
 ### Sign Up
-POST {{baseUrl}}/auth/signup
+POST {{baseUrl}}/v1/auth/signup
 Content-Type: application/json
 
 {
@@ -26,7 +26,7 @@ Content-Type: application/json
 }
 
 ### Login
-POST {{baseUrl}}/auth/login
+POST {{baseUrl}}/v1/auth/login
 Content-Type: application/json
 
 {
@@ -39,11 +39,11 @@ Content-Type: application/json
 ### ===========================================
 
 ### Get Profile
-GET {{baseUrl}}/profile
+GET {{baseUrl}}/v1/profile
 Authorization: Bearer {{token}}
 
 ### Update Preferences
-PATCH {{baseUrl}}/profile/preferences
+PATCH {{baseUrl}}/v1/profile/preferences
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -57,7 +57,7 @@ Content-Type: application/json
 ### ===========================================
 
 ### Create New Session
-POST {{baseUrl}}/sessions
+POST {{baseUrl}}/v1/sessions
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -67,12 +67,12 @@ Content-Type: application/json
 }
 
 ### Get Session History
-GET {{baseUrl}}/sessions
+GET {{baseUrl}}/v1/sessions
 Authorization: Bearer {{token}}
 
 ### Get Session Messages
 # @name getMessages
-GET {{baseUrl}}/sessions/SESSION_ID_HERE/messages
+GET {{baseUrl}}/v1/sessions/SESSION_ID_HERE/messages
 Authorization: Bearer {{token}}
 
 ### ===========================================
@@ -81,7 +81,7 @@ Authorization: Bearer {{token}}
 
 ### Behavioral Answer (SSE Stream)
 # Uses Ollama by default, add "provider": "openai" or "anthropic" if configured
-POST {{baseUrl}}/behavioral/answer
+POST {{baseUrl}}/v1/behavioral/answer
 Content-Type: application/json
 Accept: text/event-stream
 
@@ -92,7 +92,7 @@ Accept: text/event-stream
 }
 
 ### Behavioral Answer with Session
-POST {{baseUrl}}/behavioral/answer
+POST {{baseUrl}}/v1/behavioral/answer
 Authorization: Bearer {{token}}
 Content-Type: application/json
 Accept: text/event-stream
@@ -105,7 +105,7 @@ Accept: text/event-stream
 }
 
 ### Coding Assist (SSE Stream)
-POST {{baseUrl}}/coding/assist
+POST {{baseUrl}}/v1/coding/assist
 Content-Type: application/json
 Accept: text/event-stream
 
@@ -116,7 +116,7 @@ Accept: text/event-stream
 }
 
 ### Coding Assist with Python
-POST {{baseUrl}}/coding/assist
+POST {{baseUrl}}/v1/coding/assist
 Content-Type: application/json
 Accept: text/event-stream
 
@@ -250,7 +250,7 @@ GET http://localhost:11434/api/version
 GET http://localhost:11434/api/tags
 
 ### Test Behavioral with Ollama (minimal)
-POST {{baseUrl}}/behavioral/answer
+POST {{baseUrl}}/v1/behavioral/answer
 Content-Type: application/json
 Accept: text/event-stream
 

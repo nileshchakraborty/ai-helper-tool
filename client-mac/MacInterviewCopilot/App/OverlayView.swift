@@ -370,6 +370,46 @@ struct EnhancedTranscriptionView: View {
     }
 }
 
+// MARK: - Quick Analysis View (On-Device AI Placeholder)
+struct QuickAnalysisView: View {
+    let text: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "cpu")
+                    .font(.caption2)
+                    .foregroundColor(.orange)
+                Text("Quick Analysis")
+                    .font(.caption2)
+                    .foregroundColor(.gray)
+            }
+            Text("Detected: \(classifyText(text))")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+        .padding(8)
+        .background(Color.orange.opacity(0.1))
+        .cornerRadius(6)
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.orange.opacity(0.2), lineWidth: 1))
+    }
+    
+    private func classifyText(_ text: String) -> String {
+        let lower = text.lowercased()
+        if lower.contains("tell me about") || lower.contains("describe a time") {
+            return "Behavioral Question"
+        } else if lower.contains("design") || lower.contains("system") || lower.contains("architecture") {
+            return "System Design"
+        } else if lower.contains("code") || lower.contains("function") || lower.contains("algorithm") {
+            return "Coding Question"
+        } else if lower.contains("case") || lower.contains("market") || lower.contains("profit") {
+            return "Case Interview"
+        } else {
+            return "General Question"
+        }
+    }
+}
+
 // MARK: - Helper Extensions
 extension Color {
     init(hex: String) {

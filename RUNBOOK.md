@@ -189,19 +189,19 @@ Go to **System Preferences > Privacy & Security** to grant these.
 
 ## Using the App
 
-### Stealth Features
+### Privacy & Accessibility Features
 
-The app is designed to be **completely undetectable**:
+The app is designed with **user privacy and accessibility** in mind:
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| **Invisible in Dock** | ✅ | App never shows in macOS Dock |
-| **Invisible to Screen Share** | ✅ | Hidden from Zoom, Teams, Meet, OBS |
-| **Invisible to Tray** | ✅ | No menu bar icon |
+| **Floating Overlay** | ✅ | Non-intrusive overlay for note-taking |
+| **Minimal UI Mode** | ✅ | Compact view for focused workflows |
+| **Opacity Control** | ✅ | Adjustable transparency for comfort |
 | **Click-through Mode** | ✅ | Window becomes transparent to clicks |
-| **Undetectable by Browser** | ✅ | Pure native Swift, no Electron/JS footprint |
-| **Hidden from Screenshots** | ✅ | Won't appear in any screenshot API |
-| **Stealth UI Toggle** | ✅ | Hides bulky editors, leaving only Capture buttons |
+| **Native macOS** | ✅ | Pure Swift, no Electron/browser overhead |
+| **Local Processing** | ✅ | Ollama option for offline, private AI |
+| **Stealth UI Toggle** | ✅ | Hides bulky editors, leaving only essential buttons |
 
 ### Hotkeys
 
@@ -263,9 +263,11 @@ curl http://localhost:3000/health
 
 ### AI Endpoints (SSE Streaming)
 
+All AI endpoints are prefixed with `/v1/`:
+
 ```bash
 # Behavioral coaching
-curl -X POST http://localhost:3000/behavioral/answer \
+curl -X POST http://localhost:3000/v1/behavioral/answer \
   -H "Content-Type: application/json" \
   -H "Accept: text/event-stream" \
   -d '{
@@ -275,7 +277,7 @@ curl -X POST http://localhost:3000/behavioral/answer \
   }'
 
 # Coding assistance
-curl -X POST http://localhost:3000/coding/assist \
+curl -X POST http://localhost:3000/v1/coding/assist \
   -H "Content-Type: application/json" \
   -H "Accept: text/event-stream" \
   -d '{
